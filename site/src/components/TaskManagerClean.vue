@@ -196,13 +196,26 @@
       <!-- Render each phase -->
       <div v-for="phase in store.phases" :key="phase.id" class="phase-group">
         <div class="phase-title">
+          <div class="phase-left">
+            <span class="task-drag-handle drag-handle placeholder" aria-hidden="true">⋮⋮</span>
+            <label class="checkbox-container">
+              <input
+                type="checkbox"
+                :checked="areAllTasksInPhaseCompleted(phase.id)"
+                @change="togglePhaseTasks(phase.id, $event.target.checked)"
+              />
+              <span class="checkmark"></span>
+            </label>
+          </div>
           <div class="phase-title-content">
             <h2>{{ phase.name }}</h2>
-            <span class="phase-goal-tag">{{ phase.goal }}</span>
           </div>
-          <span class="phase-progress">
-            {{ getPhaseCompletedTasks(getTasksForPhase(phase.id)) }} / {{ getTasksForPhase(phase.id).length }} completed
-          </span>
+          <div class="phase-right">
+            <span v-if="phase.goal" class="phase-goal-badge">{{ phase.goal }}</span>
+            <span class="phase-progress">
+              {{ getPhaseCompletedTasks(getTasksForPhase(phase.id)) }} / {{ getTasksForPhase(phase.id).length }} completed
+            </span>
+          </div>
         </div>
 
         <div class="task-list">
@@ -475,6 +488,19 @@ function getPhaseCompletedTasks(tasks) {
 function getPhaseCompletedTasksByIds(taskIds) {
   const set = new Set(taskIds)
   return store.tasks.filter(t => set.has(t.id) && t.completed).length
+}
+
+function areAllTasksInPhaseCompleted(phaseId) {
+  const tasksInPhase = getTasksForPhase(phaseId)
+  if (tasksInPhase.length === 0) return false
+  return tasksInPhase.every(t => t.completed)
+}
+
+function togglePhaseTasks(phaseId, completed) {
+  const tasksInPhase = getTasksForPhase(phaseId)
+  for (const t of tasksInPhase) {
+    store.updateTask(t.id, { completed })
+  }
 }
 
 // Methods
@@ -996,16 +1022,20 @@ function handlePhaseReorder() {
   background: #F0F2F7;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #E5E5E5;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: 0.75rem;
 }
 
-.phase-title-content {
+.phase-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
+
+.phase-title-content { display: flex; align-items: center; gap: 0.75rem; }
+.phase-right { display: flex; align-items: center; gap: 0.75rem; }
 
 .phase-title h2 {
   margin: 0;
@@ -1014,11 +1044,11 @@ function handlePhaseReorder() {
   color: #1a1a1a;
 }
 
-.phase-goal-tag {
-  background: #E8F4FD;
-  color: #0066CC;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+.phase-goal-badge {
+  background: #F3F4F6;
+  color: #6B7280;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -1310,6 +1340,11 @@ function handlePhaseReorder() {
   font-weight: bold;
   font-size: 12px;
   margin-right: 0.5rem;
+}
+
+.task-drag-handle.placeholder {
+  opacity: 0; /* placeholder for alignment only */
+  pointer-events: none;
 }
 
 .task-drag-handle:hover {
