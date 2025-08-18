@@ -207,16 +207,14 @@
 
         <div class="task-list">
           <draggable
-            :list="getTasksForPhase(phase.id)"
-            item-key="id"
+            v-model="phase.tasks"
             handle=".task-drag-handle"
-            @end="(evt) => handleTaskReorder(phase.id, evt)"
             animation="150"
             class="task-draggable-list"
             group="tasks"
           >
-            <template #item="{ element: task }">
-              <div class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
+            <template #item="{ element: taskId }">
+              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed, editing: editingTask === taskId }">
                 <div class="task-row">
                   <!-- Drag Handle -->
                   <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
@@ -225,35 +223,35 @@
                   <label class="checkbox-container">
                     <input
                       type="checkbox"
-                      :checked="task.completed"
-                      @change="updateTaskCompletion(task.id, $event.target.checked)"
+                      :checked="taskMap[taskId]?.completed"
+                      @change="updateTaskCompletion(taskId, $event.target.checked)"
                     />
                     <span class="checkmark"></span>
                   </label>
 
                   <!-- Task Content -->
-                  <div class="task-content" @click="toggleEdit(task.id)">
+                  <div class="task-content" @click="toggleEdit(taskId)">
                     <div class="task-header">
-                      <h3 class="task-name" :class="{ completed: task.completed }">
-                        {{ task.name }}
+                      <h3 class="task-name" :class="{ completed: taskMap[taskId]?.completed }">
+                        {{ taskMap[taskId]?.name }}
                       </h3>
                       <div class="task-meta">
-                        <span class="domain-badge" :class="`domain-${task.domain}`">
-                          {{ store.getDomainById(task.domain)?.name || task.domain }}
+                        <span class="domain-badge" :class="`domain-${taskMap[taskId]?.domain}`">
+                          {{ store.getDomainById(taskMap[taskId]?.domain)?.name || taskMap[taskId]?.domain }}
                         </span>
                       </div>
                     </div>
-                    <p class="task-description" v-if="task.description">
-                      {{ task.description }}
+                    <p class="task-description" v-if="taskMap[taskId]?.description">
+                      {{ taskMap[taskId]?.description }}
                     </p>
-                    <div v-if="task.features && task.features.length > 0" class="task-features">
-                      <span class="feature-tag" v-for="featureId in task.features" :key="featureId">
+                    <div v-if="taskMap[taskId]?.features && taskMap[taskId]?.features.length > 0" class="task-features">
+                      <span class="feature-tag" v-for="featureId in taskMap[taskId]?.features" :key="featureId">
                         {{ store.getFeatureById(featureId)?.name || featureId }}
                       </span>
                     </div>
-                    <div v-if="task.dependsOn && task.dependsOn.length > 0" class="task-dependencies">
+                    <div v-if="taskMap[taskId]?.dependsOn && taskMap[taskId]?.dependsOn.length > 0" class="task-dependencies">
                       <span class="dependencies-label">Depends on:</span>
-                      <span class="dependency" v-for="depId in task.dependsOn" :key="depId">
+                      <span class="dependency" v-for="depId in taskMap[taskId]?.dependsOn" :key="depId">
                         {{ store.tasks.find(t => t.id === depId)?.name || depId }}
                       </span>
                     </div>
@@ -261,18 +259,18 @@
 
                   <!-- Task Actions -->
                   <div class="task-actions">
-                    <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
+                    <button @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
-                    <button @click="editTaskDependencies(task)" class="btn-icon" title="Edit Dependencies">
+                    <button @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" title="Edit Dependencies">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                       </svg>
                     </button>
-                    <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
+                    <button @click="handleRemoveTask(taskId)" class="btn-icon btn-danger" title="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
@@ -281,15 +279,15 @@
                 </div>
 
                 <!-- Inline Edit Form -->
-                <div v-if="editingTask === task.id" class="edit-form">
+                <div v-if="editingTask === taskId" class="edit-form">
                   <div class="form-row">
                     <div class="form-group">
                       <label>Task Name</label>
-                      <input v-model="task.name" type="text" />
+                      <input v-model="taskMap[taskId].name" type="text" />
                     </div>
                     <div class="form-group">
                       <label>Domain</label>
-                      <select v-model="task.domain">
+                      <select v-model="taskMap[taskId].domain">
                         <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
                           {{ domain.name }}
                         </option>
@@ -298,7 +296,7 @@
                   </div>
                   <div class="form-group">
                     <label>Description</label>
-                    <textarea v-model="task.description" rows="3"></textarea>
+                    <textarea v-model="taskMap[taskId].description" rows="3"></textarea>
                   </div>
                   <div class="form-actions">
                     <button @click="editingTask = null" class="btn btn-secondary">Done</button>
@@ -311,28 +309,26 @@
       </div>
 
       <!-- Unassigned Tasks -->
-      <div v-if="getUnassignedTasks().length > 0" class="phase-group">
+      <div v-if="unassignedTaskIds.length > 0" class="phase-group">
         <div class="phase-title">
           <div class="phase-title-content">
             <h2>Unassigned Tasks</h2>
           </div>
           <span class="phase-progress">
-            {{ getPhaseCompletedTasks(getUnassignedTasks()) }} / {{ getUnassignedTasks().length }} completed
+            {{ getPhaseCompletedTasksByIds(unassignedTaskIds) }} / {{ unassignedTaskIds.length }} completed
           </span>
         </div>
 
         <div class="task-list">
           <draggable
-            :list="getUnassignedTasks()"
-            item-key="id"
+            v-model="unassignedTaskIds"
             handle=".task-drag-handle"
-            @end="handleUnassignedTaskReorder"
             animation="150"
             class="task-draggable-list"
             group="tasks"
           >
-            <template #item="{ element: task }">
-              <div class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
+            <template #item="{ element: taskId }">
+              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed, editing: editingTask === taskId }">
                 <div class="task-row">
                   <!-- Drag Handle -->
                   <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
@@ -340,41 +336,41 @@
                   <label class="checkbox-container">
                     <input
                       type="checkbox"
-                      :checked="task.completed"
-                      @change="updateTaskCompletion(task.id, $event.target.checked)"
+                      :checked="taskMap[taskId]?.completed"
+                      @change="updateTaskCompletion(taskId, $event.target.checked)"
                     />
                     <span class="checkmark"></span>
                   </label>
 
-                  <div class="task-content" @click="toggleEdit(task.id)">
+                  <div class="task-content" @click="toggleEdit(taskId)">
                     <div class="task-header">
-                      <h3 class="task-name" :class="{ completed: task.completed }">
-                        {{ task.name }}
+                      <h3 class="task-name" :class="{ completed: taskMap[taskId]?.completed }">
+                        {{ taskMap[taskId]?.name }}
                       </h3>
                       <div class="task-meta">
-                        <span class="domain-badge" :class="`domain-${task.domain}`">
-                          {{ store.getDomainById(task.domain)?.name || task.domain }}
+                        <span class="domain-badge" :class="`domain-${taskMap[taskId]?.domain}`">
+                          {{ store.getDomainById(taskMap[taskId]?.domain)?.name || taskMap[taskId]?.domain }}
                         </span>
                       </div>
                     </div>
-                    <p class="task-description" v-if="task.description">
-                      {{ task.description }}
+                    <p class="task-description" v-if="taskMap[taskId]?.description">
+                      {{ taskMap[taskId]?.description }}
                     </p>
                   </div>
 
                   <div class="task-actions">
-                    <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
+                    <button @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
-                    <button @click="editTaskDependencies(task)" class="btn-icon" title="Edit Dependencies">
+                    <button @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" title="Edit Dependencies">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                       </svg>
                     </button>
-                    <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
+                    <button @click="handleRemoveTask(taskId)" class="btn-icon btn-danger" title="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
@@ -432,6 +428,34 @@ const availableTasksForDependencies = computed(() => {
   return store.tasks.filter(task => task.id !== editingDependencies.value.id)
 })
 
+// Map of task id -> task object for easy lookup
+const taskMap = computed(() => {
+  const map = {}
+  for (const t of store.tasks) map[t.id] = t
+  return map
+})
+
+// Computed unassigned task IDs with setter to persist order into store.tasks
+const unassignedTaskIds = computed({
+  get() {
+    const assignedIds = new Set(store.phases.flatMap(p => p.tasks || []))
+    return store.tasks.filter(t => !assignedIds.has(t.id)).map(t => t.id)
+  },
+  set(newIds) {
+    // Safely reorder only the unassigned tasks based on newIds.
+    // Consider items not present in newIds as assigned (e.g., just moved into a phase).
+    const phaseAssigned = new Set(store.phases.flatMap(p => p.tasks || []))
+    const idsNotInNew = new Set(store.tasks.filter(t => !newIds.includes(t.id)).map(t => t.id))
+    const assignedLike = new Set([...phaseAssigned, ...idsNotInNew])
+
+    const assignedTasks = store.tasks.filter(t => assignedLike.has(t.id))
+    const unassignedById = new Map(store.tasks.filter(t => !assignedLike.has(t.id)).map(t => [t.id, t]))
+    const reorderedUnassigned = newIds.map(id => unassignedById.get(id)).filter(Boolean)
+
+    store.tasks.splice(0, store.tasks.length, ...assignedTasks, ...reorderedUnassigned)
+  }
+})
+
 // Helper functions for getting tasks
 function getTasksForPhase(phaseId) {
   const phase = store.getPhaseById(phaseId)
@@ -446,6 +470,11 @@ function getUnassignedTasks() {
 
 function getPhaseCompletedTasks(tasks) {
   return tasks.filter(task => task.completed).length
+}
+
+function getPhaseCompletedTasksByIds(taskIds) {
+  const set = new Set(taskIds)
+  return store.tasks.filter(t => set.has(t.id) && t.completed).length
 }
 
 // Methods
@@ -554,24 +583,6 @@ function handlePhaseReorder() {
   // The v-model on draggable automatically updates store.phases
   // This function is called after reordering is complete
   console.log('Phases reordered')
-}
-
-function handleTaskReorder(phaseId, evt) {
-  // Update the phase's task list to reflect the new order
-  const phase = store.getPhaseById(phaseId)
-  if (!phase || !phase.tasks) return
-
-  const tasksInPhase = getTasksForPhase(phaseId)
-  const newTaskOrder = tasksInPhase.map(task => task.id)
-
-  store.updatePhase(phaseId, { tasks: newTaskOrder })
-  console.log('Tasks reordered in phase:', phaseId, newTaskOrder)
-}
-
-function handleUnassignedTaskReorder() {
-  // For unassigned tasks, we don't need to update phase task lists
-  // The drag reorder already updated the tasks array order
-  console.log('Unassigned tasks reordered')
 }
 </script>
 
