@@ -22,7 +22,7 @@ export const useProjectStore = defineStore('project', () => {
     } catch (error) {
       console.warn('Failed to load persisted data:', error)
     }
-    
+
     // Return default data if no saved data or error
     return {
       domains: projectData.domains,

@@ -313,7 +313,9 @@
       <!-- Unassigned Tasks -->
       <div v-if="getUnassignedTasks().length > 0" class="phase-group">
         <div class="phase-title">
-          <h2>Unassigned Tasks</h2>
+          <div class="phase-title-content">
+            <h2>Unassigned Tasks</h2>
+          </div>
           <span class="phase-progress">
             {{ getPhaseCompletedTasks(getUnassignedTasks()) }} / {{ getUnassignedTasks().length }} completed
           </span>
@@ -365,6 +367,11 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button @click="editTaskDependencies(task)" class="btn-icon" title="Edit Dependencies">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                       </svg>
                     </button>
                     <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
@@ -419,6 +426,12 @@ const progressPercent = computed(() => {
   return (completedTasks.value / store.tasks.length) * 100
 })
 
+// Computed property for available tasks for dependencies
+const availableTasksForDependencies = computed(() => {
+  if (!editingDependencies.value) return []
+  return store.tasks.filter(task => task.id !== editingDependencies.value.id)
+})
+
 // Helper functions for getting tasks
 function getTasksForPhase(phaseId) {
   const phase = store.getPhaseById(phaseId)
@@ -434,12 +447,6 @@ function getUnassignedTasks() {
 function getPhaseCompletedTasks(tasks) {
   return tasks.filter(task => task.completed).length
 }
-
-// Computed property for available tasks for dependencies
-const availableTasksForDependencies = computed(() => {
-  if (!editingDependencies.value) return []
-  return store.tasks.filter(task => task.id !== editingDependencies.value.id)
-})
 
 // Methods
 function handleAddTask() {
@@ -837,6 +844,13 @@ function handleUnassignedTaskReorder() {
   margin: 0;
 }
 
+.modal-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
 .phase-list-compact {
   max-height: 400px;
   overflow-y: auto;
@@ -914,13 +928,6 @@ function handleUnassignedTaskReorder() {
   border-top: 1px solid #E5E5E5;
   margin: -1px;
   border-radius: 0 0 6px 6px;
-}
-
-.modal-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #666;
-  font-size: 0.9rem;
-  font-weight: normal;
 }
 
 .dependency-list {

@@ -1,9 +1,9 @@
 <script setup>
-import TaskManagerSimple from './components/TaskManagerFixed.vue'
+import TaskManagerClean from './components/TaskManagerClean.vue'
 </script>
 
 <template>
-  <TaskManagerSimple />
+  <TaskManagerClean />
 </template>
 
 <style>
