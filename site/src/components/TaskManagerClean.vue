@@ -982,7 +982,7 @@ function handleUnassignedTaskReorder() {
 }
 
 .phase-title {
-  background: #F5F6FA;
+  background: #F0F2F7;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #E5E5E5;
   display: flex;
@@ -1047,7 +1047,7 @@ function handleUnassignedTaskReorder() {
 .task-row {
   display: flex;
   align-items: flex-start;
-  padding: 1rem 0.75rem;
+  padding: 1rem 0.25rem;
   gap: 0.75rem;
 }
 
@@ -1234,10 +1234,10 @@ function handleUnassignedTaskReorder() {
 }
 
 .edit-form {
-  padding: 1rem 0.75rem;
+  padding: 1rem 1rem;
   background: #FAFAFA;
   border-top: 1px solid #E5E5E5;
-  margin: -1rem -0.75rem 0 -0.75rem;
+  margin: -1rem -0.25rem 0 -0.25rem;
 }
 
 .drag-handle {
