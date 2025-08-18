@@ -1058,7 +1058,7 @@ function handlePhaseReorder() {
 .task-row {
   display: flex;
   align-items: flex-start;
-  padding: 1rem 0.25rem;
+  padding: 1rem 0.5rem;
   gap: 0.75rem;
 }
 
@@ -1245,7 +1245,7 @@ function handlePhaseReorder() {
 }
 
 .edit-form {
-  padding: 1rem 1rem;
+  padding: 1rem 2rem;
   background: #FAFAFA;
   border-top: 1px solid #E5E5E5;
   margin: -1rem -0.25rem 0 -0.25rem;
