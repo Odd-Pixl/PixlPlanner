@@ -1289,12 +1289,12 @@ function handlePhaseReorder() {
 .sortable-chosen {
   background: #F8F9FA;
   border: 1px solid #007AFF;
-  transform: rotate(2deg);
+  transform: none;
 }
 
 .sortable-drag {
   opacity: 0.8;
-  transform: rotate(5deg);
+  transform: none;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
