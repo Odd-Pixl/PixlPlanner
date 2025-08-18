@@ -19,6 +19,12 @@
           </svg>
           Manage Phases
         </button>
+        <button @click="handleResetData" class="btn btn-warning" title="Reset all data to defaults">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Reset
+        </button>
       </div>
       <div class="stats">
         <div class="stat-item">
@@ -105,21 +111,32 @@
 
         <!-- Phase List -->
         <div class="phase-list">
-          <div v-for="phase in store.phases" :key="phase.id" class="phase-item">
-            <div class="phase-header">
-              <span class="drag-handle">⋮⋮</span>
-              <div class="phase-info">
-                <h4>{{ phase.name }}</h4>
-                <p>{{ phase.goal }}</p>
-                <span class="task-count">{{ (phase.tasks || []).length }} tasks</span>
+          <draggable
+            v-model="store.phases"
+            item-key="id"
+            handle=".drag-handle"
+            @end="handlePhaseReorder"
+            animation="150"
+            class="phase-draggable-list"
+          >
+            <template #item="{ element: phase }">
+              <div class="phase-item" :key="phase.id">
+                <div class="phase-header">
+                  <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                  <div class="phase-info">
+                    <h4>{{ phase.name }}</h4>
+                    <p>{{ phase.goal }}</p>
+                    <span class="task-count">{{ (phase.tasks || []).length }} tasks</span>
+                  </div>
+                  <button @click="handleRemovePhase(phase.id)" class="btn-icon btn-danger" title="Delete Phase">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <button @click="handleRemovePhase(phase.id)" class="btn-icon btn-danger" title="Delete Phase">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-              </button>
-            </div>
-          </div>
+            </template>
+          </draggable>
         </div>
 
         <div class="form-actions">
@@ -140,87 +157,102 @@
         </div>
 
         <div class="task-list">
-          <div v-for="task in getTasksForPhase(phase.id)" :key="task.id" class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
-            <div class="task-row">
-              <!-- Completion Checkbox -->
-              <label class="checkbox-container">
-                <input
-                  type="checkbox"
-                  :checked="task.completed"
-                  @change="updateTaskCompletion(task.id, $event.target.checked)"
-                />
-                <span class="checkmark"></span>
-              </label>
+          <draggable
+            :list="getTasksForPhase(phase.id)"
+            item-key="id"
+            handle=".task-drag-handle"
+            @end="(evt) => handleTaskReorder(phase.id, evt)"
+            animation="150"
+            class="task-draggable-list"
+            group="tasks"
+          >
+            <template #item="{ element: task }">
+              <div class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
+                <div class="task-row">
+                  <!-- Drag Handle -->
+                  <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
+                  
+                  <!-- Completion Checkbox -->
+                  <label class="checkbox-container">
+                    <input
+                      type="checkbox"
+                      :checked="task.completed"
+                      @change="updateTaskCompletion(task.id, $event.target.checked)"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
 
-              <!-- Task Content -->
-              <div class="task-content" @click="toggleEdit(task.id)">
-                <div class="task-header">
-                  <h3 class="task-name" :class="{ completed: task.completed }">
-                    {{ task.name }}
-                  </h3>
-                  <div class="task-meta">
-                    <span class="domain-badge" :class="`domain-${task.domain}`">
-                      {{ store.getDomainById(task.domain)?.name || task.domain }}
-                    </span>
+                  <!-- Task Content -->
+                  <div class="task-content" @click="toggleEdit(task.id)">
+                    <div class="task-header">
+                      <h3 class="task-name" :class="{ completed: task.completed }">
+                        {{ task.name }}
+                      </h3>
+                      <div class="task-meta">
+                        <span class="domain-badge" :class="`domain-${task.domain}`">
+                          {{ store.getDomainById(task.domain)?.name || task.domain }}
+                        </span>
+                      </div>
+                    </div>
+                    <p class="task-description" v-if="task.description">
+                      {{ task.description }}
+                    </p>
+                    <div v-if="task.features && task.features.length > 0" class="task-features">
+                      <span class="feature-tag" v-for="featureId in task.features" :key="featureId">
+                        {{ store.getFeatureById(featureId)?.name || featureId }}
+                      </span>
+                    </div>
+                    <div v-if="task.dependsOn && task.dependsOn.length > 0" class="task-dependencies">
+                      <span class="dependencies-label">Depends on:</span>
+                      <span class="dependency" v-for="depId in task.dependsOn" :key="depId">
+                        {{ store.tasks.find(t => t.id === depId)?.name || depId }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Task Actions -->
+                  <div class="task-actions">
+                    <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <p class="task-description" v-if="task.description">
-                  {{ task.description }}
-                </p>
-                <div v-if="task.features && task.features.length > 0" class="task-features">
-                  <span class="feature-tag" v-for="featureId in task.features" :key="featureId">
-                    {{ store.getFeatureById(featureId)?.name || featureId }}
-                  </span>
-                </div>
-                <div v-if="task.dependsOn && task.dependsOn.length > 0" class="task-dependencies">
-                  <span class="dependencies-label">Depends on:</span>
-                  <span class="dependency" v-for="depId in task.dependsOn" :key="depId">
-                    {{ store.tasks.find(t => t.id === depId)?.name || depId }}
-                  </span>
-                </div>
-              </div>
 
-              <!-- Task Actions -->
-              <div class="task-actions">
-                <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Inline Edit Form -->
-            <div v-if="editingTask === task.id" class="edit-form">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Task Name</label>
-                  <input v-model="task.name" type="text" />
-                </div>
-                <div class="form-group">
-                  <label>Domain</label>
-                  <select v-model="task.domain">
-                    <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                      {{ domain.name }}
-                    </option>
-                  </select>
+                <!-- Inline Edit Form -->
+                <div v-if="editingTask === task.id" class="edit-form">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Task Name</label>
+                      <input v-model="task.name" type="text" />
+                    </div>
+                    <div class="form-group">
+                      <label>Domain</label>
+                      <select v-model="task.domain">
+                        <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
+                          {{ domain.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Description</label>
+                    <textarea v-model="task.description" rows="3"></textarea>
+                  </div>
+                  <div class="form-actions">
+                    <button @click="editingTask = null" class="btn btn-secondary">Done</button>
+                  </div>
                 </div>
               </div>
-              <div class="form-group">
-                <label>Description</label>
-                <textarea v-model="task.description" rows="3"></textarea>
-              </div>
-              <div class="form-actions">
-                <button @click="editingTask = null" class="btn btn-secondary">Done</button>
-              </div>
-            </div>
-          </div>
+            </template>
+          </draggable>
         </div>
       </div>
 
@@ -234,48 +266,63 @@
         </div>
 
         <div class="task-list">
-          <div v-for="task in getUnassignedTasks()" :key="task.id" class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
-            <div class="task-row">
-              <label class="checkbox-container">
-                <input
-                  type="checkbox"
-                  :checked="task.completed"
-                  @change="updateTaskCompletion(task.id, $event.target.checked)"
-                />
-                <span class="checkmark"></span>
-              </label>
+          <draggable
+            :list="getUnassignedTasks()"
+            item-key="id"
+            handle=".task-drag-handle"
+            @end="handleUnassignedTaskReorder"
+            animation="150"
+            class="task-draggable-list"
+            group="tasks"
+          >
+            <template #item="{ element: task }">
+              <div class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
+                <div class="task-row">
+                  <!-- Drag Handle -->
+                  <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
+                  
+                  <label class="checkbox-container">
+                    <input
+                      type="checkbox"
+                      :checked="task.completed"
+                      @change="updateTaskCompletion(task.id, $event.target.checked)"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
 
-              <div class="task-content" @click="toggleEdit(task.id)">
-                <div class="task-header">
-                  <h3 class="task-name" :class="{ completed: task.completed }">
-                    {{ task.name }}
-                  </h3>
-                  <div class="task-meta">
-                    <span class="domain-badge" :class="`domain-${task.domain}`">
-                      {{ store.getDomainById(task.domain)?.name || task.domain }}
-                    </span>
+                  <div class="task-content" @click="toggleEdit(task.id)">
+                    <div class="task-header">
+                      <h3 class="task-name" :class="{ completed: task.completed }">
+                        {{ task.name }}
+                      </h3>
+                      <div class="task-meta">
+                        <span class="domain-badge" :class="`domain-${task.domain}`">
+                          {{ store.getDomainById(task.domain)?.name || task.domain }}
+                        </span>
+                      </div>
+                    </div>
+                    <p class="task-description" v-if="task.description">
+                      {{ task.description }}
+                    </p>
+                  </div>
+
+                  <div class="task-actions">
+                    <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <p class="task-description" v-if="task.description">
-                  {{ task.description }}
-                </p>
               </div>
-
-              <div class="task-actions">
-                <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+            </template>
+          </draggable>
         </div>
       </div>
     </div>
@@ -285,6 +332,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useProjectStore } from '../stores/project-simple.js'
+import draggable from 'vuedraggable'
 
 const store = useProjectStore()
 
@@ -358,6 +406,12 @@ function updateTaskCompletion(taskId, completed) {
   store.updateTask(taskId, { completed })
 }
 
+function handleResetData() {
+  if (confirm('Are you sure you want to reset all data to defaults? This will remove all your progress and custom tasks/phases.')) {
+    store.resetToDefaults()
+  }
+}
+
 // Phase management methods
 function handleAddPhase() {
   if (newPhase.value.name.trim()) {
@@ -399,6 +453,30 @@ function handleRemovePhase(phaseId) {
       store.removePhase(phaseId)
     }
   }
+}
+
+function handlePhaseReorder() {
+  // The v-model on draggable automatically updates store.phases
+  // This function is called after reordering is complete
+  console.log('Phases reordered')
+}
+
+function handleTaskReorder(phaseId, evt) {
+  // Update the phase's task list to reflect the new order
+  const phase = store.getPhaseById(phaseId)
+  if (!phase || !phase.tasks) return
+
+  const tasksInPhase = getTasksForPhase(phaseId)
+  const newTaskOrder = tasksInPhase.map(task => task.id)
+  
+  store.updatePhase(phaseId, { tasks: newTaskOrder })
+  console.log('Tasks reordered in phase:', phaseId, newTaskOrder)
+}
+
+function handleUnassignedTaskReorder() {
+  // For unassigned tasks, we don't need to update phase task lists
+  // The drag reorder already updated the tasks array order
+  console.log('Unassigned tasks reordered')
 }
 </script>
 
@@ -527,6 +605,16 @@ function handleRemovePhase(phaseId) {
 
 .btn-secondary:hover {
   background: #E5E5E5;
+}
+
+.btn-warning {
+  background: #FF9500;
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #E6850E;
+  transform: translateY(-1px);
 }
 
 .btn-small {
@@ -918,9 +1006,64 @@ function handleRemovePhase(phaseId) {
   align-items: center;
   justify-content: center;
   margin-top: 0.25rem;
+  user-select: none;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 .drag-handle:hover {
   color: #999;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Dragging styles */
+.phase-draggable-list,
+.task-draggable-list {
+  width: 100%;
+}
+
+.sortable-ghost {
+  opacity: 0.5;
+  background: #F0F8FF;
+  border: 2px dashed #007AFF;
+}
+
+.sortable-chosen {
+  background: #F8F9FA;
+  border: 1px solid #007AFF;
+  transform: rotate(2deg);
+}
+
+.sortable-drag {
+  opacity: 0.8;
+  transform: rotate(5deg);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.task-drag-handle {
+  width: 16px;
+  height: 16px;
+  color: #CCC;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-weight: bold;
+  font-size: 12px;
+  margin-right: 0.5rem;
+}
+
+.task-drag-handle:hover {
+  color: #999;
+  cursor: grab;
+}
+
+.task-drag-handle:active {
+  cursor: grabbing;
 }
 </style>

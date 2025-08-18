@@ -1,18 +1,47 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import projectData from '../data/project-data.json'
 
 export const useProjectStore = defineStore('project', () => {
-  // State - make sure these are reactive
-  const domains = ref([...projectData.domains])
-  const features = ref([...projectData.features])
-  const phases = ref([...projectData.phases])
+  // Load from localStorage if available, otherwise use default data
+  function loadPersistedData() {
+    try {
+      const saved = localStorage.getItem('pixl-planner-data')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        return {
+          domains: parsed.domains || projectData.domains,
+          features: parsed.features || projectData.features,
+          phases: parsed.phases || projectData.phases,
+          tasks: parsed.tasks || projectData.tasks.map(task => ({
+            ...task,
+            completed: task.completed || false
+          }))
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load persisted data:', error)
+    }
+    
+    // Return default data if no saved data or error
+    return {
+      domains: projectData.domains,
+      features: projectData.features,
+      phases: projectData.phases,
+      tasks: projectData.tasks.map(task => ({
+        ...task,
+        completed: task.completed || false
+      }))
+    }
+  }
 
-  // Add completion status to existing tasks
-  const tasks = ref(projectData.tasks.map(task => ({
-    ...task,
-    completed: task.completed || false
-  })))
+  const persistedData = loadPersistedData()
+
+  // State - make sure these are reactive
+  const domains = ref([...persistedData.domains])
+  const features = ref([...persistedData.features])
+  const phases = ref([...persistedData.phases])
+  const tasks = ref([...persistedData.tasks])
 
   // Debug info
   console.log('Store initialized with:', {
@@ -21,6 +50,27 @@ export const useProjectStore = defineStore('project', () => {
     phases: phases.value.length,
     tasks: tasks.value.length
   })
+
+  // Save to localStorage whenever data changes
+  function saveToLocalStorage() {
+    try {
+      const dataToSave = {
+        domains: domains.value,
+        features: features.value,
+        phases: phases.value,
+        tasks: tasks.value
+      }
+      localStorage.setItem('pixl-planner-data', JSON.stringify(dataToSave))
+      console.log('Data saved to localStorage')
+    } catch (error) {
+      console.error('Failed to save data to localStorage:', error)
+    }
+  }
+
+  // Watch for changes and save automatically
+  watch([domains, features, phases, tasks], () => {
+    saveToLocalStorage()
+  }, { deep: true })
 
   // Getters
   function getDomainById(id) {
@@ -128,6 +178,18 @@ export const useProjectStore = defineStore('project', () => {
     phases.value = newOrder
   }
 
+  function resetToDefaults() {
+    domains.value = [...projectData.domains]
+    features.value = [...projectData.features]
+    phases.value = [...projectData.phases]
+    tasks.value = projectData.tasks.map(task => ({
+      ...task,
+      completed: false
+    }))
+    localStorage.removeItem('pixl-planner-data')
+    console.log('Data reset to defaults')
+  }
+
   return {
     // State
     domains,
@@ -145,6 +207,8 @@ export const useProjectStore = defineStore('project', () => {
     addPhase,
     removePhase,
     updatePhase,
-    reorderPhases
+    reorderPhases,
+    resetToDefaults,
+    saveToLocalStorage
   }
 })
