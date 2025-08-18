@@ -44,7 +44,7 @@
       <span class="progress-text">{{ Math.round(progressPercent) }}% Complete</span>
     </div>
 
-    <!-- Add Task Form -->
+    <!-- Add Task Form Modal -->
     <div v-if="showAddForm" class="modal-overlay" @click="showAddForm = false">
       <div class="modal" @click.stop>
         <h3>Add New Task</h3>
@@ -130,115 +130,152 @@
 
     <!-- Task List Grouped by Phases -->
     <div class="phases-container">
-      <div v-for="(phaseTasks, phaseId) in tasksByPhase" :key="phaseId" class="phase-group">
+      <!-- Render each phase -->
+      <div v-for="phase in store.phases" :key="phase.id" class="phase-group">
         <div class="phase-title">
-          <h2>{{ getPhaseTitle(phaseId) }}</h2>
+          <h2>{{ phase.name }} - {{ phase.goal }}</h2>
           <span class="phase-progress">
-            {{ getPhaseCompletedTasks(phaseTasks) }} / {{ phaseTasks.length }} completed
+            {{ getPhaseCompletedTasks(getTasksForPhase(phase.id)) }} / {{ getTasksForPhase(phase.id).length }} completed
           </span>
         </div>
+
         <div class="task-list">
-          <draggable
-            :list="phaseTasks"
-            @end="handleReorder"
-            item-key="id"
-            class="drag-area"
-            :animation="200"
-            ghost-class="ghost-task"
-            chosen-class="chosen-task"
-            handle=".drag-handle"
-          >
-            <template #item="{ element: task }">
-              <div class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
-                <div class="task-row">
-                  <!-- Drag Handle -->
-                  <div class="drag-handle" title="Drag to reorder">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
-                    </svg>
-                  </div>
+          <div v-for="task in getTasksForPhase(phase.id)" :key="task.id" class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
+            <div class="task-row">
+              <!-- Completion Checkbox -->
+              <label class="checkbox-container">
+                <input
+                  type="checkbox"
+                  :checked="task.completed"
+                  @change="updateTaskCompletion(task.id, $event.target.checked)"
+                />
+                <span class="checkmark"></span>
+              </label>
 
-                  <!-- Completion Checkbox -->
-                  <label class="checkbox-container">
-                    <input
-                      type="checkbox"
-                      v-model="task.completed"
-                      @change="updateTaskCompletion(task.id, $event.target.checked)"
-                    />
-                    <span class="checkmark"></span>
-                  </label>
-
-                  <!-- Task Content -->
-                  <div class="task-content" @click="toggleEdit(task.id)">
-                    <div class="task-header">
-                      <h3 class="task-name" :class="{ completed: task.completed }">
-                        {{ task.name }}
-                      </h3>
-                      <div class="task-meta">
-                        <span class="domain-badge" :class="`domain-${task.domain}`">
-                          {{ store.getDomainById(task.domain)?.name || task.domain }}
-                        </span>
-                      </div>
-                    </div>
-                    <p class="task-description" v-if="task.description">
-                      {{ task.description }}
-                    </p>
-                    <div v-if="task.features && task.features.length > 0" class="task-features">
-                      <span class="feature-tag" v-for="featureId in task.features" :key="featureId">
-                        {{ store.getFeatureById(featureId)?.name || featureId }}
-                      </span>
-                    </div>
-                    <div v-if="task.dependsOn && task.dependsOn.length > 0" class="task-dependencies">
-                      <span class="dependencies-label">Depends on:</span>
-                      <span class="dependency" v-for="depId in task.dependsOn" :key="depId">
-                        {{ store.tasks.find(t => t.id === depId)?.name || depId }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Task Actions -->
-                  <div class="task-actions">
-                    <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
+              <!-- Task Content -->
+              <div class="task-content" @click="toggleEdit(task.id)">
+                <div class="task-header">
+                  <h3 class="task-name" :class="{ completed: task.completed }">
+                    {{ task.name }}
+                  </h3>
+                  <div class="task-meta">
+                    <span class="domain-badge" :class="`domain-${task.domain}`">
+                      {{ store.getDomainById(task.domain)?.name || task.domain }}
+                    </span>
                   </div>
                 </div>
-
-                <!-- Inline Edit Form -->
-                <div v-if="editingTask === task.id" class="edit-form">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label>Task Name</label>
-                      <input v-model="task.name" type="text" />
-                    </div>
-                    <div class="form-group">
-                      <label>Domain</label>
-                      <select v-model="task.domain">
-                        <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                          {{ domain.name }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label>Description</label>
-                    <textarea v-model="task.description" rows="3"></textarea>
-                  </div>
-                  <div class="form-actions">
-                    <button @click="editingTask = null" class="btn btn-secondary">Done</button>
-                  </div>
+                <p class="task-description" v-if="task.description">
+                  {{ task.description }}
+                </p>
+                <div v-if="task.features && task.features.length > 0" class="task-features">
+                  <span class="feature-tag" v-for="featureId in task.features" :key="featureId">
+                    {{ store.getFeatureById(featureId)?.name || featureId }}
+                  </span>
+                </div>
+                <div v-if="task.dependsOn && task.dependsOn.length > 0" class="task-dependencies">
+                  <span class="dependencies-label">Depends on:</span>
+                  <span class="dependency" v-for="depId in task.dependsOn" :key="depId">
+                    {{ store.tasks.find(t => t.id === depId)?.name || depId }}
+                  </span>
                 </div>
               </div>
-            </template>
-          </draggable>
+
+              <!-- Task Actions -->
+              <div class="task-actions">
+                <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Inline Edit Form -->
+            <div v-if="editingTask === task.id" class="edit-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Task Name</label>
+                  <input v-model="task.name" type="text" />
+                </div>
+                <div class="form-group">
+                  <label>Domain</label>
+                  <select v-model="task.domain">
+                    <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
+                      {{ domain.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <textarea v-model="task.description" rows="3"></textarea>
+              </div>
+              <div class="form-actions">
+                <button @click="editingTask = null" class="btn btn-secondary">Done</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unassigned Tasks -->
+      <div v-if="getUnassignedTasks().length > 0" class="phase-group">
+        <div class="phase-title">
+          <h2>Unassigned Tasks</h2>
+          <span class="phase-progress">
+            {{ getPhaseCompletedTasks(getUnassignedTasks()) }} / {{ getUnassignedTasks().length }} completed
+          </span>
+        </div>
+
+        <div class="task-list">
+          <div v-for="task in getUnassignedTasks()" :key="task.id" class="task-item" :class="{ completed: task.completed, editing: editingTask === task.id }">
+            <div class="task-row">
+              <label class="checkbox-container">
+                <input
+                  type="checkbox"
+                  :checked="task.completed"
+                  @change="updateTaskCompletion(task.id, $event.target.checked)"
+                />
+                <span class="checkmark"></span>
+              </label>
+
+              <div class="task-content" @click="toggleEdit(task.id)">
+                <div class="task-header">
+                  <h3 class="task-name" :class="{ completed: task.completed }">
+                    {{ task.name }}
+                  </h3>
+                  <div class="task-meta">
+                    <span class="domain-badge" :class="`domain-${task.domain}`">
+                      {{ store.getDomainById(task.domain)?.name || task.domain }}
+                    </span>
+                  </div>
+                </div>
+                <p class="task-description" v-if="task.description">
+                  {{ task.description }}
+                </p>
+              </div>
+
+              <div class="task-actions">
+                <button @click="toggleEdit(task.id)" class="btn-icon" title="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -248,7 +285,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useProjectStore } from '../stores/project-simple.js'
-import draggable from 'vuedraggable'
 
 const store = useProjectStore()
 
@@ -278,10 +314,6 @@ const progressPercent = computed(() => {
   return (completedTasks.value / store.tasks.length) * 100
 })
 
-const tasksByPhase = computed(() => {
-  return store.getTasksByPhase()
-})
-
 // Helper functions for getting tasks
 function getTasksForPhase(phaseId) {
   const phase = store.getPhaseById(phaseId)
@@ -294,28 +326,28 @@ function getUnassignedTasks() {
   return store.tasks.filter(task => !assignedTaskIds.includes(task.id))
 }
 
+function getPhaseCompletedTasks(tasks) {
+  return tasks.filter(task => task.completed).length
+}
+
 // Methods
 function handleAddTask() {
-  console.log('Adding task:', newTask.value)
-  store.addTask({ ...newTask.value })
-  newTask.value = {
-    name: '',
-    domain: 'runtime',
-    description: '',
-    features: []
+  if (newTask.value.name.trim()) {
+    store.addTask({ ...newTask.value })
+    newTask.value = {
+      name: '',
+      domain: 'runtime',
+      description: '',
+      features: []
+    }
+    showAddForm.value = false
   }
-  showAddForm.value = false
 }
 
 function handleRemoveTask(taskId) {
-  console.log('Removing task:', taskId)
   if (confirm('Are you sure you want to delete this task?')) {
     store.removeTask(taskId)
   }
-}
-
-function handleReorder() {
-  console.log('Tasks reordered')
 }
 
 function toggleEdit(taskId) {
@@ -323,7 +355,6 @@ function toggleEdit(taskId) {
 }
 
 function updateTaskCompletion(taskId, completed) {
-  console.log('Updating task completion:', taskId, completed)
   store.updateTask(taskId, { completed })
 }
 
@@ -343,7 +374,6 @@ function handleRemovePhase(phaseId) {
   const hasTasksInPhase = phase.tasks && phase.tasks.length > 0
 
   if (hasTasksInPhase) {
-    // Show options to move tasks
     const otherPhases = store.phases.filter(p => p.id !== phaseId)
     if (otherPhases.length === 0) {
       alert('Cannot delete the last phase with tasks. Create another phase first.')
@@ -369,14 +399,6 @@ function handleRemovePhase(phaseId) {
       store.removePhase(phaseId)
     }
   }
-}
-
-function handlePhaseReorder() {
-  console.log('Phases reordered')
-}
-
-function getPhaseCompletedTasks(tasks) {
-  return tasks.filter(task => task.completed).length
 }
 </script>
 
@@ -507,6 +529,11 @@ function getPhaseCompletedTasks(tasks) {
   background: #E5E5E5;
 }
 
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -530,6 +557,10 @@ function getPhaseCompletedTasks(tasks) {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.phase-modal {
+  max-width: 600px;
 }
 
 .form-group {
@@ -573,16 +604,6 @@ function getPhaseCompletedTasks(tasks) {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-}
-
-/* Phase Management Styles */
-.phase-modal {
-  max-width: 600px;
-}
-
-.btn-small {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
 }
 
 .add-phase-form {
@@ -640,11 +661,6 @@ function getPhaseCompletedTasks(tasks) {
   color: #999;
 }
 
-.ghost-phase {
-  opacity: 0.5;
-}
-
-/* Phase Groups */
 .phases-container {
   display: flex;
   flex-direction: column;
@@ -713,30 +729,6 @@ function getPhaseCompletedTasks(tasks) {
   gap: 1rem;
 }
 
-.drag-handle {
-  width: 20px;
-  height: 20px;
-  color: #CCC;
-  cursor: grab;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.25rem;
-}
-
-.drag-handle:hover {
-  color: #999;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-.drag-handle svg {
-  width: 16px;
-  height: 16px;
-}
-
 .checkbox-container {
   position: relative;
   cursor: pointer;
@@ -766,7 +758,6 @@ function getPhaseCompletedTasks(tasks) {
   border-color: #007AFF;
 }
 
-/* Fix checkbox styling */
 .checkbox-container input:checked ~ .checkmark {
   background-color: #007AFF;
   border-color: #007AFF;
@@ -918,23 +909,18 @@ function getPhaseCompletedTasks(tasks) {
   margin: -1.5rem -1.5rem 0 -1.5rem;
 }
 
-.ghost-task {
-  opacity: 0.5;
-  transform: rotate(2deg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+.drag-handle {
+  width: 20px;
+  height: 20px;
+  color: #CCC;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
 }
 
-.chosen-task {
-  transform: scale(1.02);
-}
-
-/* Empty state */
-.task-list:empty::after {
-  content: "No tasks yet. Add your first task to get started!";
-  display: block;
-  text-align: center;
+.drag-handle:hover {
   color: #999;
-  padding: 3rem;
-  font-style: italic;
 }
 </style>

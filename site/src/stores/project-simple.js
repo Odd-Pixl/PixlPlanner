@@ -7,7 +7,7 @@ export const useProjectStore = defineStore('project', () => {
   const domains = ref([...projectData.domains])
   const features = ref([...projectData.features])
   const phases = ref([...projectData.phases])
-  
+
   // Add completion status to existing tasks
   const tasks = ref(projectData.tasks.map(task => ({
     ...task,
@@ -39,18 +39,18 @@ export const useProjectStore = defineStore('project', () => {
   function getTasksByPhase() {
     const grouped = {}
     phases.value.forEach(phase => {
-      grouped[phase.id] = tasks.value.filter(task => 
+      grouped[phase.id] = tasks.value.filter(task =>
         phase.tasks && phase.tasks.includes(task.id)
       )
     })
-    
+
     // Add unassigned tasks
     const assignedTaskIds = phases.value.flatMap(phase => phase.tasks || [])
     const unassignedTasks = tasks.value.filter(task => !assignedTaskIds.includes(task.id))
     if (unassignedTasks.length > 0) {
       grouped['unassigned'] = unassignedTasks
     }
-    
+
     return grouped
   }
 
@@ -103,7 +103,7 @@ export const useProjectStore = defineStore('project', () => {
     const phaseIndex = phases.value.findIndex(phase => phase.id === phaseId)
     if (phaseIndex !== -1) {
       const phase = phases.value[phaseIndex]
-      
+
       // Move tasks to another phase if specified
       if (moveTasksToPhaseId && phase.tasks && phase.tasks.length > 0) {
         const targetPhase = phases.value.find(p => p.id === moveTasksToPhaseId)
@@ -111,7 +111,7 @@ export const useProjectStore = defineStore('project', () => {
           targetPhase.tasks = [...(targetPhase.tasks || []), ...phase.tasks]
         }
       }
-      
+
       phases.value.splice(phaseIndex, 1)
       console.log('Phase removed:', phaseId)
     }
