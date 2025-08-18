@@ -7,23 +7,20 @@
 
     <div class="controls">
       <div class="control-group">
-        <button @click="showAddForm = true" class="btn btn-primary">
+        <button @click="showAddForm = true" class="btn btn-primary btn-icon-only" title="Add Task">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
-          Add Task
         </button>
-        <button @click="showPhaseForm = true" class="btn btn-secondary">
+        <button @click="showPhaseForm = true" class="btn btn-secondary btn-icon-only" title="Manage Phases">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
-          Manage Phases
         </button>
-        <button @click="handleResetData" class="btn btn-warning" title="Reset all data to defaults">
+        <button @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
-          Reset
         </button>
       </div>
       <div class="stats">
@@ -82,35 +79,27 @@
     <!-- Phase Management Modal -->
     <div v-if="showPhaseForm" class="modal-overlay" @click="showPhaseForm = false">
       <div class="modal phase-modal" @click.stop>
-        <h3>Manage Phases</h3>
-
-        <div class="form-group">
-          <button @click="showAddPhaseForm = true" class="btn btn-primary btn-small">
+        <div class="modal-header">
+          <h3>Manage Phases</h3>
+          <button @click="showAddPhaseForm = true" class="btn btn-primary btn-small" title="Add Phase">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Add Phase
           </button>
         </div>
 
         <!-- Add Phase Form -->
         <div v-if="showAddPhaseForm" class="add-phase-form">
-          <div class="form-group">
-            <label>Phase Name</label>
-            <input v-model="newPhase.name" type="text" placeholder="Enter phase name" />
-          </div>
-          <div class="form-group">
-            <label>Goal</label>
-            <input v-model="newPhase.goal" type="text" placeholder="Phase goal or milestone" />
-          </div>
-          <div class="form-actions">
+          <div class="form-row">
+            <input v-model="newPhase.name" type="text" placeholder="Phase name" class="phase-name-input" />
+            <input v-model="newPhase.goal" type="text" placeholder="Goal or milestone" class="phase-goal-input" />
+            <button @click="handleAddPhase" class="btn btn-primary btn-small">Add</button>
             <button @click="showAddPhaseForm = false" class="btn btn-secondary btn-small">Cancel</button>
-            <button @click="handleAddPhase" class="btn btn-primary btn-small">Add Phase</button>
           </div>
         </div>
 
-        <!-- Phase List -->
-        <div class="phase-list">
+        <!-- Compact Phase List -->
+        <div class="phase-list-compact">
           <draggable
             v-model="store.phases"
             item-key="id"
@@ -120,19 +109,43 @@
             class="phase-draggable-list"
           >
             <template #item="{ element: phase }">
-              <div class="phase-item" :key="phase.id">
-                <div class="phase-header">
+              <div class="phase-item-compact" :class="{ editing: editingPhase === phase.id }">
+                <!-- Compact Phase Row -->
+                <div class="phase-row" @click="togglePhaseEdit(phase.id)">
                   <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-                  <div class="phase-info">
-                    <h4>{{ phase.name }}</h4>
-                    <p>{{ phase.goal }}</p>
-                    <span class="task-count">{{ (phase.tasks || []).length }} tasks</span>
+                  <div class="phase-info-compact">
+                    <span class="phase-name-compact">{{ phase.name }}</span>
+                    <span class="phase-goal-compact">{{ phase.goal }}</span>
+                    <span class="task-count-compact">{{ (phase.tasks || []).length }} tasks</span>
                   </div>
-                  <button @click="handleRemovePhase(phase.id)" class="btn-icon btn-danger" title="Delete Phase">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                  </button>
+                  <div class="phase-actions">
+                    <button @click.stop="togglePhaseEdit(phase.id)" class="btn-icon btn-small" title="Edit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger btn-small" title="Delete">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Inline Edit Form -->
+                <div v-if="editingPhase === phase.id" class="phase-edit-form">
+                  <div class="form-group">
+                    <label>Phase Name</label>
+                    <input v-model="phase.name" type="text" />
+                  </div>
+                  <div class="form-group">
+                    <label>Goal</label>
+                    <input v-model="phase.goal" type="text" />
+                  </div>
+                  <div class="form-actions">
+                    <button @click="editingPhase = null" class="btn btn-secondary btn-small">Done</button>
+                  </div>
                 </div>
               </div>
             </template>
@@ -143,9 +156,7 @@
           <button @click="showPhaseForm = false" class="btn btn-secondary">Close</button>
         </div>
       </div>
-    </div>
-
-    <!-- Task List Grouped by Phases -->
+    </div>    <!-- Task List Grouped by Phases -->
     <div class="phases-container">
       <!-- Render each phase -->
       <div v-for="phase in store.phases" :key="phase.id" class="phase-group">
@@ -341,6 +352,7 @@ const showAddForm = ref(false)
 const showPhaseForm = ref(false)
 const showAddPhaseForm = ref(false)
 const editingTask = ref(null)
+const editingPhase = ref(null)
 const newTask = ref({
   name: '',
   domain: 'runtime',
@@ -400,6 +412,10 @@ function handleRemoveTask(taskId) {
 
 function toggleEdit(taskId) {
   editingTask.value = editingTask.value === taskId ? null : taskId
+}
+
+function togglePhaseEdit(phaseId) {
+  editingPhase.value = editingPhase.value === phaseId ? null : phaseId
 }
 
 function updateTaskCompletion(taskId, completed) {
@@ -622,6 +638,20 @@ function handleUnassignedTaskReorder() {
   font-size: 0.9rem;
 }
 
+.btn-icon-only {
+  padding: 0.75rem;
+  min-width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-only .icon {
+  width: 20px;
+  height: 20px;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -696,57 +726,122 @@ function handleUnassignedTaskReorder() {
 
 .add-phase-form {
   background: #F8F9FA;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
-  margin: 1rem 0;
+  margin-bottom: 1rem;
   border: 1px solid #E9ECEF;
 }
 
-.phase-list {
-  max-height: 300px;
-  overflow-y: auto;
-  margin: 1rem 0;
+.add-phase-form .form-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.phase-item {
+.phase-name-input {
+  flex: 2;
+  padding: 0.5rem;
+  border: 1px solid #DDD;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.phase-goal-input {
+  flex: 3;
+  padding: 0.5rem;
+  border: 1px solid #DDD;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.phase-list-compact {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.phase-item-compact {
   background: white;
   border: 1px solid #E5E5E5;
-  border-radius: 8px;
+  border-radius: 6px;
   margin-bottom: 0.5rem;
   transition: all 0.2s;
 }
 
-.phase-item:hover {
+.phase-item-compact:hover {
   border-color: #D0D0D0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.phase-header {
+.phase-item-compact.editing {
+  border-color: #007AFF;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+}
+
+.phase-row {
   display: flex;
   align-items: center;
-  padding: 1rem;
-  gap: 1rem;
+  padding: 0.75rem;
+  gap: 0.75rem;
+  cursor: pointer;
 }
 
-.phase-info {
+.phase-info-compact {
   flex: 1;
+  display: grid;
+  grid-template-columns: 2fr 2fr auto;
+  gap: 0.75rem;
+  align-items: center;
 }
 
-.phase-info h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1rem;
+.phase-name-compact {
   font-weight: 600;
   color: #1a1a1a;
+  font-size: 0.95rem;
 }
 
-.phase-info p {
-  margin: 0 0 0.25rem 0;
+.phase-goal-compact {
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
-.task-count {
+.task-count-compact {
   font-size: 0.8rem;
   color: #999;
+  background: #F8F9FA;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.phase-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.phase-item-compact:hover .phase-actions {
+  opacity: 1;
+}
+
+.phase-edit-form {
+  padding: 1rem;
+  background: #FAFAFA;
+  border-top: 1px solid #E5E5E5;
+  margin: -1px;
+  border-radius: 0 0 6px 6px;
 }
 
 .phases-container {
@@ -966,8 +1061,8 @@ function handleUnassignedTaskReorder() {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
+  padding: 0.4rem;
+  border-radius: 4px;
   transition: all 0.2s;
   color: #666;
   display: flex;
@@ -975,9 +1070,18 @@ function handleUnassignedTaskReorder() {
   justify-content: center;
 }
 
+.btn-icon.btn-small {
+  padding: 0.3rem;
+}
+
 .btn-icon svg {
   width: 16px;
   height: 16px;
+}
+
+.btn-icon.btn-small svg {
+  width: 14px;
+  height: 14px;
 }
 
 .btn-icon:hover {
