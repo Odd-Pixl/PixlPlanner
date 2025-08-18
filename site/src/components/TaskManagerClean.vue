@@ -198,14 +198,7 @@
         <div class="phase-title">
           <div class="phase-left">
             <span class="task-drag-handle drag-handle placeholder" aria-hidden="true">⋮⋮</span>
-            <label class="checkbox-container">
-              <input
-                type="checkbox"
-                :checked="areAllTasksInPhaseCompleted(phase.id)"
-                @change="togglePhaseTasks(phase.id, $event.target.checked)"
-              />
-              <span class="checkmark"></span>
-            </label>
+            <span class="checkbox-placeholder" aria-hidden="true"></span>
           </div>
           <div class="phase-title-content">
             <h2>{{ phase.name }}</h2>
@@ -490,18 +483,7 @@ function getPhaseCompletedTasksByIds(taskIds) {
   return store.tasks.filter(t => set.has(t.id) && t.completed).length
 }
 
-function areAllTasksInPhaseCompleted(phaseId) {
-  const tasksInPhase = getTasksForPhase(phaseId)
-  if (tasksInPhase.length === 0) return false
-  return tasksInPhase.every(t => t.completed)
-}
-
-function togglePhaseTasks(phaseId, completed) {
-  const tasksInPhase = getTasksForPhase(phaseId)
-  for (const t of tasksInPhase) {
-    store.updateTask(t.id, { completed })
-  }
-}
+// (removed) phase-level toggle helpers
 
 // Methods
 function handleAddTask() {
@@ -1020,7 +1002,7 @@ function handlePhaseReorder() {
 
 .phase-title {
   background: #F0F2F7;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.5rem 1rem 0.5rem;
   border-bottom: 1px solid #E5E5E5;
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -1028,11 +1010,7 @@ function handlePhaseReorder() {
   gap: 0.75rem;
 }
 
-.phase-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+.phase-left { display: grid; grid-template-columns: 16px 20px; align-items: center; gap: 0.5rem; }
 
 .phase-title-content { display: flex; align-items: center; gap: 0.75rem; }
 .phase-right { display: flex; align-items: center; gap: 0.75rem; }
@@ -1085,12 +1063,7 @@ function handlePhaseReorder() {
   color: #999;
 }
 
-.task-row {
-  display: flex;
-  align-items: flex-start;
-  padding: 1rem 0.5rem;
-  gap: 0.75rem;
-}
+.task-row { display: grid; grid-template-columns: 16px 20px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 1rem 0.5rem; gap: 0.5rem; }
 
 .checkbox-container {
   position: relative;
@@ -1342,10 +1315,8 @@ function handlePhaseReorder() {
   margin-right: 0.5rem;
 }
 
-.task-drag-handle.placeholder {
-  opacity: 0; /* placeholder for alignment only */
-  pointer-events: none;
-}
+.task-drag-handle.placeholder { opacity: 0; pointer-events: none; }
+.checkbox-placeholder { display: inline-block; width: 20px; height: 20px; }
 
 .task-drag-handle:hover {
   color: #999;
