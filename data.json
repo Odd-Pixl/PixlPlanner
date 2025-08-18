@@ -1,0 +1,260 @@
+{
+  "domains": [
+    { "id": "editor", "name": "Editor (AST)", "description": "Authoring layer for scene graph, inspectors, node graphs", "order": 1 },
+    { "id": "runtime", "name": "Runtime (IR)", "description": "Optimized in-memory structures for rendering, gameplay, and simulation", "order": 2 },
+    { "id": "interaction", "name": "Interaction", "description": "Direct manipulation, selection, input handling, gizmos", "order": 3 },
+    { "id": "persistence", "name": "Persistence", "description": "Serialization, project storage, formats", "order": 4 },
+    { "id": "compilation", "name": "Compilation", "description": "Transforms AST → IR, incremental bake pipeline", "order": 5 },
+    { "id": "tooling", "name": "Tooling", "description": "Debug overlays, console, profiling, runtime inspection", "order": 6 }
+  ],
+  "features": [
+    { "id": "transform", "name": "Transform", "description": "Position, rotation, scale, hierarchy", "order": 1 },
+    { "id": "materials", "name": "Materials/Shaders", "description": "Material definitions, shader programs, PSOs", "order": 2 },
+    { "id": "meshes", "name": "Meshes", "description": "Geometry data, vertex/index buffers", "order": 3 },
+    { "id": "textures", "name": "Textures (Sprites)", "description": "2D assets applied to materials or sprites", "order": 4 },
+    { "id": "tilemaps", "name": "Tilemaps", "description": "Grid-based maps for 2D levels", "order": 5 },
+    { "id": "animation", "name": "Animation", "description": "Keyframes, tweens, curves for entity properties", "order": 6 },
+    { "id": "particles", "name": "Particles", "description": "Emitter-driven visual effects", "order": 7 },
+    { "id": "lighting", "name": "Lighting", "description": "Light sources and illumination models", "order": 8 },
+    { "id": "shadow", "name": "Shadow", "description": "Shadow casting/receiving systems", "order": 9 },
+    { "id": "gameplay", "name": "Gameplay", "description": "Game-specific logic, scripting, and progression", "order": 10 }
+  ],
+  "phases": [
+    {
+      "id": "phase-0",
+      "name": "Foundations",
+      "goal": "prereq",
+      "tasks": ["entity-ids", "transform-system", "dirty-flags"]
+    },
+    {
+      "id": "phase-1",
+      "name": "Scene Graph + IR + First Visuals",
+      "goal": "first-render",
+      "tasks": ["ast-scene-graph", "ir-core", "compiler-skeleton", "renderer-minimal"]
+    },
+    {
+      "id": "phase-2",
+      "name": "Editing Essentials",
+      "goal": "inspector-ready",
+      "tasks": ["inspectable-props", "inspector-ui", "undo-redo"]
+    },
+    {
+      "id": "phase-3",
+      "name": "Manipulation & Direct Interaction",
+      "goal": "touch-pencil-editing",
+      "tasks": ["manipulable-protocol", "selection-gizmos", "touch-pencil-input"]
+    },
+    {
+      "id": "phase-4",
+      "name": "Debug Console (Early Tooling)",
+      "goal": "live-debugging",
+      "tasks": ["console-core", "console-commands", "lua-mini-repl"]
+    },
+    {
+      "id": "phase-5",
+      "name": "Extended Systems",
+      "goal": "gameplay-systems",
+      "tasks": ["material-system", "animation-system", "tilemap-system", "particle-system", "story-flow"]
+    },
+    {
+      "id": "phase-6",
+      "name": "Polishing & Tooling",
+      "goal": "debug-and-polish",
+      "tasks": ["perf-overlay", "entity-inspector-runtime", "scene-debugger"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "entity-ids",
+      "name": "Entity IDs + Registry",
+      "domain": "runtime",
+      "features": [],
+      "dependsOn": [],
+      "description": "Stable IDs across AST/IR, O(1) lookup"
+    },
+    {
+      "id": "transform-system",
+      "name": "Transform Component",
+      "domain": "runtime",
+      "features": ["transform"],
+      "dependsOn": ["entity-ids"],
+      "description": "Local/world storage, parent indices"
+    },
+    {
+      "id": "dirty-flags",
+      "name": "Dirty Flag System",
+      "domain": "runtime",
+      "features": [],
+      "dependsOn": ["transform-system"],
+      "description": "Mark nodes dirty and propagate changes"
+    },
+    {
+      "id": "ast-scene-graph",
+      "name": "AST Scene Graph",
+      "domain": "editor",
+      "features": ["transform"],
+      "dependsOn": ["dirty-flags"],
+      "description": "Observable, serializable editor model"
+    },
+    {
+      "id": "ir-core",
+      "name": "IR Core",
+      "domain": "runtime",
+      "features": ["transform", "meshes"],
+      "dependsOn": ["entity-ids"],
+      "description": "Flat entity arrays optimized for runtime"
+    },
+    {
+      "id": "compiler-skeleton",
+      "name": "AST → IR Compiler Skeleton",
+      "domain": "compilation",
+      "features": [],
+      "dependsOn": ["ast-scene-graph", "ir-core"],
+      "description": "Incremental bake integration"
+    },
+    {
+      "id": "renderer-minimal",
+      "name": "Simple Metal Renderer",
+      "domain": "runtime",
+      "features": ["meshes", "materials"],
+      "dependsOn": ["ir-core"],
+      "description": "Hardcoded material/shader, cube/plane render"
+    },
+    {
+      "id": "inspectable-props",
+      "name": "InspectableProperty System",
+      "domain": "editor",
+      "features": [],
+      "dependsOn": ["ast-scene-graph"],
+      "description": "Macros + wrappers for auto-inspector"
+    },
+    {
+      "id": "inspector-ui",
+      "name": "Inspector UI",
+      "domain": "editor",
+      "features": [],
+      "dependsOn": ["inspectable-props"],
+      "description": "SwiftUI auto-controls for AST properties"
+    },
+    {
+      "id": "undo-redo",
+      "name": "Undo/Redo Stack",
+      "domain": "editor",
+      "features": [],
+      "dependsOn": ["ast-scene-graph"],
+      "description": "Command history for safe editing"
+    },
+    {
+      "id": "manipulable-protocol",
+      "name": "Manipulable Protocol",
+      "domain": "interaction",
+      "features": ["transform"],
+      "dependsOn": ["ir-core"],
+      "description": "Defines how entities expose handles for manipulation"
+    },
+    {
+      "id": "selection-gizmos",
+      "name": "Selection + Gizmos",
+      "domain": "interaction",
+      "features": ["transform"],
+      "dependsOn": ["manipulable-protocol"],
+      "description": "Translate/rotate/scale handles in Metal view"
+    },
+    {
+      "id": "touch-pencil-input",
+      "name": "Touch + Pencil Input",
+      "domain": "interaction",
+      "features": ["transform"],
+      "dependsOn": ["selection-gizmos"],
+      "description": "Direct manipulation of entities in 2D/3D"
+    },
+    {
+      "id": "console-core",
+      "name": "Console Core",
+      "domain": "tooling",
+      "features": [],
+      "dependsOn": [],
+      "description": "Console UI + text buffer in SwiftUI"
+    },
+    {
+      "id": "console-commands",
+      "name": "Console Commands",
+      "domain": "tooling",
+      "features": ["gameplay"],
+      "dependsOn": ["console-core"],
+      "description": "Command registry for entity inspection and runtime control"
+    },
+    {
+      "id": "lua-mini-repl",
+      "name": "Lua Mini REPL",
+      "domain": "tooling",
+      "features": ["gameplay"],
+      "dependsOn": ["console-core"],
+      "description": "Embedded scripting for quick math + gameplay experiments"
+    },
+    {
+      "id": "material-system",
+      "name": "Material/Shading System",
+      "domain": "runtime",
+      "features": ["materials"],
+      "dependsOn": ["renderer-minimal"],
+      "description": "Graph-based materials with PSO management"
+    },
+    {
+      "id": "animation-system",
+      "name": "Animation System",
+      "domain": "runtime",
+      "features": ["animation", "transform"],
+      "dependsOn": ["ir-core"],
+      "description": "Keyframes, timelines, tweening baked to IR"
+    },
+    {
+      "id": "tilemap-system",
+      "name": "Tilemap System",
+      "domain": "runtime",
+      "features": ["tilemaps", "textures"],
+      "dependsOn": ["renderer-minimal"],
+      "description": "2D grid maps with direct-draw editor"
+    },
+    {
+      "id": "particle-system",
+      "name": "Particle System",
+      "domain": "runtime",
+      "features": ["particles"],
+      "dependsOn": ["renderer-minimal"],
+      "description": "Emitter-based particles, basic effects"
+    },
+    {
+      "id": "story-flow",
+      "name": "Story/Flow System",
+      "domain": "editor",
+      "features": ["gameplay"],
+      "dependsOn": ["ast-scene-graph"],
+      "description": "Node graph for story progression, rules"
+    },
+    {
+      "id": "perf-overlay",
+      "name": "Performance Overlay",
+      "domain": "tooling",
+      "features": [],
+      "dependsOn": ["renderer-minimal"],
+      "description": "FPS, memory, draw call debug HUD"
+    },
+    {
+      "id": "entity-inspector-runtime",
+      "name": "Entity Inspector (Runtime)",
+      "domain": "tooling",
+      "features": [],
+      "dependsOn": ["ir-core"],
+      "description": "Live IR view with entity/component data"
+    },
+    {
+      "id": "scene-debugger",
+      "name": "Scene Debugger",
+      "domain": "tooling",
+      "features": ["lighting", "shadow"],
+      "dependsOn": ["renderer-minimal"],
+      "description": "Visualize bounds, collisions, light probes"
+    }
+  ]
+}
