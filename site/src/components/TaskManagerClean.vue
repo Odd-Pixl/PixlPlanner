@@ -1063,13 +1063,16 @@ function handlePhaseReorder() {
   color: #999;
 }
 
-.task-row { display: grid; grid-template-columns: 16px 20px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 1rem 0.5rem; gap: 0.5rem; }
+.task-row { display: grid; grid-template-columns: 16px 24px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 1rem 0.5rem; gap: 0.5rem; }
 
 .checkbox-container {
   position: relative;
   cursor: pointer;
   margin-top: 0.25rem;
 }
+
+/* Extra spacing to the right of the checkbox in task rows */
+.task-row .checkbox-container { padding-right: 0.25rem; }
 
 .checkbox-container input {
   position: absolute;
