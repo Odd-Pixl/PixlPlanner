@@ -1,5 +1,6 @@
 <template>
-  <div class="task-manager">
+  <div class="safe-area-container">
+    <div class="task-manager">
     <div class="main-header">
       <!-- Left side: Title and Controls -->
       <div class="header-left">
@@ -565,6 +566,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -1113,16 +1115,22 @@ function handlePhaseReorder() {
   :global(html), :global(body) { background-color: #0f0f0f !important; }
 }
 
+.safe-area-container {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: light-dark(#fafafa, #0f0f0f);
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+}
+
 .task-manager {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
   font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  /* Background matches task cards */
-  background: light-dark(#fafafa, #0f0f0f);
-  min-height: 100vh;
-  min-height: 100dvh;
-  width: 100%;
 }
 
 .main-header {
@@ -1299,19 +1307,7 @@ function handlePhaseReorder() {
   backdrop-filter: blur(4px);
   overflow: hidden;
   touch-action: none;
-  /* Extend under safe areas on iOS - use negative margins to extend backdrop */
-  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
-  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
-  margin-left: calc(-1 * env(safe-area-inset-left, 0px));
-  margin-right: calc(-1 * env(safe-area-inset-right, 0px));
-  /* But add padding for modal content positioning */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  /* Use viewport units that account for dynamic viewport */
-  height: 100dvh;
-  width: 100dvw;
+  padding: env(safe-area-inset-top, 1rem) max(env(safe-area-inset-right), 2rem) env(safe-area-inset-bottom, 1rem) max(env(safe-area-inset-left), 2rem);
 }
 
 .modal {
@@ -1332,6 +1328,21 @@ function handlePhaseReorder() {
   .modal {
     max-height: 80vh;
     height: 80vh;
+  }
+}
+
+/* Mobile landscape adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal {
+    max-height: 85vh;
+    height: 85vh;
+    max-width: 600px;
+    width: 85%;
+  }
+  
+  .phase-modal {
+    max-height: 85vh;
+    height: 85vh;
   }
 }
 
@@ -2278,12 +2289,20 @@ function handlePhaseReorder() {
   .task-name,
   .item-name,
   .dependency-name { color: #fff; }
+  
+  /* Brighten domain colors in dark mode */
+  .domain-editor { color: #4D9FFF; }
+  .domain-runtime { color: #FF7D4D; }
+  .domain-interaction { color: #4DDD66; }
+  .domain-persistence { color: #DD4D99; }
+  .domain-compilation { color: #994DDD; }
+  .domain-tooling { color: #E6B84D; }
 }
 
 /* Mobile tweaks */
 @media (max-width: 600px) {
   .task-manager {
-    padding: 1rem;
+    padding: 1.25rem;
   }
 }
 
