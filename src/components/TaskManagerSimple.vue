@@ -41,7 +41,6 @@
       <div class="progress-bar">
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
-      <span class="progress-text">{{ Math.round(progressPercent) }}% Complete</span>
     </div>
 
     <!-- Add Task Form -->
@@ -381,6 +380,18 @@ function getPhaseCompletedTasks(tasks) {
 </script>
 
 <style scoped>
+/* Ensure page background matches app (handles Safari safe areas) */
+:global(html), :global(body) {
+  background-color: #fafafa !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html), :global(body) { background-color: #0f0f0f !important; }
+}
+
 .task-manager {
   max-width: 1000px;
   margin: 0 auto;
@@ -444,6 +455,7 @@ function getPhaseCompletedTasks(tasks) {
 .progress-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -451,14 +463,15 @@ function getPhaseCompletedTasks(tasks) {
 .progress-bar {
   flex: 1;
   height: 8px;
-  background: #E5E5E5;
+  background: #E8E8E8;
   border-radius: 4px;
   overflow: hidden;
+  max-width: 300px;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #007AFF, #0056CC);
+  background: #007AFF;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -555,7 +568,7 @@ function getPhaseCompletedTasks(tasks) {
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #E5E5E5;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -694,17 +707,10 @@ function getPhaseCompletedTasks(tasks) {
 }
 
 .task-item:hover {
-  background: #FAFAFA;
+  background: transparent;
 }
 
-.task-item.completed {
-  opacity: 0.7;
-}
 
-.task-item.completed .task-name {
-  text-decoration: line-through;
-  color: #999;
-}
 
 .task-row {
   display: flex;
@@ -756,7 +762,7 @@ function getPhaseCompletedTasks(tasks) {
   height: 20px;
   width: 20px;
   background-color: #fff;
-  border: 2px solid #DDD;
+  border: 1px solid #DDD;
   border-radius: 4px;
   display: block;
   transition: all 0.2s;
@@ -825,12 +831,12 @@ function getPhaseCompletedTasks(tasks) {
   letter-spacing: 0.5px;
 }
 
-.domain-editor { background: #E8F4FD; color: #0066CC; }
-.domain-runtime { background: #FFF2E8; color: #CC4400; }
-.domain-interaction { background: #F0FFF4; color: #00AA22; }
-.domain-persistence { background: #FFF0F5; color: #AA0055; }
-.domain-compilation { background: #F5F0FF; color: #6600AA; }
-.domain-tooling { background: #FFFACD; color: #B8860B; }
+.domain-editor { background: rgba(0, 102, 204, 0.1); color: #0066CC; }
+.domain-runtime { background: rgba(204, 68, 0, 0.1); color: #CC4400; }
+.domain-interaction { background: rgba(0, 170, 34, 0.1); color: #00AA22; }
+.domain-persistence { background: rgba(170, 0, 85, 0.1); color: #AA0055; }
+.domain-compilation { background: rgba(102, 0, 170, 0.1); color: #6600AA; }
+.domain-tooling { background: rgba(184, 134, 11, 0.1); color: #B8860B; }
 
 .task-description {
   color: #666;
@@ -937,4 +943,23 @@ function getPhaseCompletedTasks(tasks) {
   padding: 3rem;
   font-style: italic;
 }
+@media (prefers-color-scheme: dark) {
+  /* Define per-component accent color in dark mode */
+  .task-manager { --accent-color: #007AFF; }
+
+  /* Restore primary text color to white in dark mode */
+  .task-manager { color: #fff; }
+  .header h1,
+  .phase-title h2,
+  .task-name,
+  .modal h3 { color: #fff; }
+
+  /* Use accent for primary button + checkbox in dark mode only */
+  .btn-primary { background: var(--accent-color); }
+  .checkbox-container input:checked ~ .checkmark {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+}
+
 </style>

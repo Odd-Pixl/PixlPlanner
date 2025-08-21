@@ -3,9 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Pixl Planner</title>
-  </head>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f0f0f">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    html, body, #app {
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body, #app { background-color: #0f0f0f; }
+    }
+  </style>
+</head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>

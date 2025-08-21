@@ -293,7 +293,7 @@ function handleRemoveTask(taskId) {
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #E5E5E5;
+  border: 1px solid #E5E5E5;
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;

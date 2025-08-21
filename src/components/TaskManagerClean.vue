@@ -46,7 +46,6 @@
       <div class="progress-bar">
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
-      <span class="progress-text">{{ Math.round(progressPercent) }}% Complete</span>
     </div>
 
     <!-- Mobile-only lock/unlock under stats + progress for touch devices -->
@@ -1080,11 +1079,14 @@ function handlePhaseReorder() {
 
 /* Ensure body fills viewport and uses page background */
 :global(html), :global(body) {
-  background: light-dark(#fafafa, #0f0f0f) !important;
+  background-color: #fafafa !important;
   margin: 0;
   padding: 0;
   min-height: 100vh;
   min-height: 100dvh;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html), :global(body) { background-color: #0f0f0f !important; }
 }
 
 .task-manager {
@@ -1154,6 +1156,7 @@ function handlePhaseReorder() {
 .progress-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -1161,14 +1164,15 @@ function handlePhaseReorder() {
 .progress-bar {
   flex: 1;
   height: 8px;
-  background: light-dark(#f0f0f0, #333);
+  background: light-dark(#E8E8E8, #3a3a3a);
   border-radius: 4px;
   overflow: hidden;
+  max-width: 300px;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #007AFF, #0056CC);
+  background: #007AFF;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -1344,7 +1348,7 @@ function handlePhaseReorder() {
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid light-dark(#e0e0e0, #555);
+  border: 1px solid light-dark(#e0e0e0, #2a2a2a);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -1637,17 +1641,10 @@ function handlePhaseReorder() {
 }
 
 .task-item:hover {
-  background: light-dark(#f8f8f8, #1a1a1a);
+  background: transparent;
 }
 
-.task-item.completed {
-  opacity: 0.7;
-}
 
-.task-item.completed .task-name {
-  text-decoration: line-through;
-  color: #999;
-}
 
 .task-row { display: grid; grid-template-columns: 16px 24px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 0.75rem 0.5rem; gap: 0.5rem; cursor: pointer; }
 
@@ -1673,7 +1670,7 @@ function handlePhaseReorder() {
   height: 20px;
   width: 20px;
   background-color: light-dark(#fff, #1a1a1a);
-  border: 2px solid light-dark(#ddd, #555);
+  border: 1px solid light-dark(#ddd, #555);
   border-radius: 4px;
   display: block;
   transition: all 0.2s;
@@ -1684,8 +1681,8 @@ function handlePhaseReorder() {
 }
 
 .checkbox-container input:checked ~ .checkmark {
-  background-color: light-dark(#666, #888);
-  border-color: light-dark(#666, #888);
+  background-color: #007AFF;
+  border-color: #007AFF;
 }
 
 .checkmark:after {
@@ -1742,12 +1739,12 @@ function handlePhaseReorder() {
   font-weight: 500;
 }
 
-.domain-editor { background: #E8F4FD; color: #0066CC; }
-.domain-runtime { background: #FFF2E8; color: #CC4400; }
-.domain-interaction { background: #F0FFF4; color: #00AA22; }
-.domain-persistence { background: #FFF0F5; color: #AA0055; }
-.domain-compilation { background: #F5F0FF; color: #6600AA; }
-.domain-tooling { background: #FFFACD; color: #B8860B; }
+.domain-editor { background: rgba(0, 102, 204, 0.1); color: #0066CC; }
+.domain-runtime { background: rgba(204, 68, 0, 0.1); color: #CC4400; }
+.domain-interaction { background: rgba(0, 170, 34, 0.1); color: #00AA22; }
+.domain-persistence { background: rgba(170, 0, 85, 0.1); color: #AA0055; }
+.domain-compilation { background: rgba(102, 0, 170, 0.1); color: #6600AA; }
+.domain-tooling { background: rgba(184, 134, 11, 0.1); color: #B8860B; }
 
 .task-description {
   color: #666;
@@ -1963,7 +1960,7 @@ function handlePhaseReorder() {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid light-dark(#e0e0e0, #404040);
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
   background: light-dark(#f5f5f5, #0f0f0f);
 }
 
@@ -2179,7 +2176,7 @@ function handlePhaseReorder() {
 .ring-svg { width: 20px; height: 20px; display: block; }
 .ring-track {
   fill: none;
-  stroke: #E5E5E5;
+  stroke: light-dark(#E8E8E8, #3a3a3a);
   stroke-width: 6;
   stroke-linecap: round;
 }
@@ -2193,6 +2190,20 @@ function handlePhaseReorder() {
   transition: stroke-dashoffset 0.3s ease;
 }
 
+/* Dark mode accent variable + usage */
+@media (prefers-color-scheme: dark) {
+  /* Define accent color for this component only in dark mode */
+  .task-manager { --accent-color: #007AFF; }
+
+  /* Use accent for ring, primary button, and checkbox */
+  .ring-progress { stroke: var(--accent-color); }
+  .btn-primary { background: var(--accent-color); }
+  .checkbox-container input:checked ~ .checkmark {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+}
+
 .task-drag-handle:hover {
   color: #999;
   cursor: grab;
@@ -2200,6 +2211,18 @@ function handlePhaseReorder() {
 
 .task-drag-handle:active {
   cursor: grabbing;
+}
+
+/* Restore primary text color in dark mode */
+@media (prefers-color-scheme: dark) {
+  .task-manager { color: #fff; }
+  .header h1,
+  .modal h3,
+  .toolbar-title,
+  .phase-title h2,
+  .task-name,
+  .item-name,
+  .dependency-name { color: #fff; }
 }
 
 /* Mobile portrait tweaks */
