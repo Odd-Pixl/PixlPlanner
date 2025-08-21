@@ -92,23 +92,25 @@
     <!-- Add Task Form Modal -->
     <div v-if="showAddForm" class="modal-overlay" @click="showAddForm = false">
       <div class="modal" @click.stop>
-        <h3>Add New Task</h3>
-        <form @submit.prevent="handleAddTask">
-          <div class="form-group">
-            <label>Task Name</label>
-            <input v-model="newTask.name" type="text" required />
+        <h3>New task</h3>
+        <form @submit.prevent="handleAddTask" class="task-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Name</label>
+              <input ref="newTaskNameInput" v-model="newTask.name" type="text" required />
+            </div>
           </div>
           <div class="form-group">
+            <label>Description</label>
+            <textarea v-model="newTask.description" rows="3"></textarea>
+          </div>
+          <div class="form-group domain-group">
             <label>Domain</label>
             <select v-model="newTask.domain">
               <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
                 {{ domain.name }}
               </option>
             </select>
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea v-model="newTask.description" rows="3"></textarea>
           </div>
           <div class="form-actions">
             <button type="button" @click="showAddForm = false" class="btn btn-secondary">Cancel</button>
@@ -502,6 +504,7 @@ const showUnlockModal = ref(false)
 const unlockPassword = ref('')
 const unlockError = ref('')
 const unlockInputRef = ref(null)
+const newTaskNameInput = ref(null)
 const editingTask = ref(null)
 // Temp edits for task names keyed by task id so we only persist on blur
 const tempTaskNames = ref({})
@@ -970,7 +973,7 @@ function handlePhaseReorder() {
 
 .modal {
   background: white;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 16px;
   max-width: 500px;
   width: 90%;
@@ -983,8 +986,16 @@ function handlePhaseReorder() {
   max-width: 600px;
 }
 
+.modal h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-row {
@@ -1024,6 +1035,7 @@ function handlePhaseReorder() {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  margin-top: 1.5rem;
 }
 
 .add-phase-form {
@@ -1486,6 +1498,26 @@ function handlePhaseReorder() {
 /* Make title input span full width like description in edit form */
 .edit-form .form-row { display: block; }
 
+/* Task form styling to match edit form */
+.task-form {
+  margin-top: 1.5rem;
+}
+
+.task-form .form-row { 
+  display: block; 
+  margin-bottom: 1rem;
+}
+
+.task-form .domain-group { 
+  max-width: 240px; 
+  margin-bottom: 1rem; 
+}
+
+.task-form .form-actions {
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+
 .drag-handle {
   width: 20px;
   height: 20px;
@@ -1636,6 +1668,7 @@ function handlePhaseReorder() {
   .progress-text { font-size: 0.8rem; min-width: 64px; }
   /* Domain select can stretch on mobile */
   .edit-form .domain-group { max-width: 100%; }
+  .task-form .domain-group { max-width: 100%; }
 
   /* On mobile, hide right-aligned meta and show stacked mobile meta */
   .task-header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
@@ -1648,5 +1681,5 @@ function handlePhaseReorder() {
 }
 
 /* Constrain only the Domain field on larger screens */
-.edit-form .domain-group { max-width: 320px; margin-bottom: 0.5rem; }
+.edit-form .domain-group { max-width: 240px; margin-bottom: 0.5rem; }
 </style>
