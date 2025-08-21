@@ -1244,7 +1244,7 @@ function handlePhaseReorder() {
 
 .btn-secondary {
   background: light-dark(#f0f0f0, #333);
-  color: light-dark(#333, #ccc);
+  color: light-dark(#333, #fff);
 }
 
 .btn-secondary:hover {
@@ -1385,6 +1385,26 @@ function handlePhaseReorder() {
   font-family: inherit;
   background: light-dark(white, #0f0f0f);
   color: light-dark(#1a1a1a, #e5e5e5);
+}
+
+.form-group select {
+  border: none;
+  background: light-dark(#f0f0f0, #242424);
+  border-radius: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 20px;
+  padding-right: 3rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .form-group select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath stroke='%23ccc' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  }
 }
 
 .form-group input:focus,
@@ -1646,7 +1666,7 @@ function handlePhaseReorder() {
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .phase-progress {
@@ -1765,7 +1785,7 @@ function handlePhaseReorder() {
   padding: 0.2rem 0.6rem;
   border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .domain-editor { background: rgba(0, 102, 204, 0.1); color: #0066CC; }
@@ -1790,8 +1810,8 @@ function handlePhaseReorder() {
 }
 
 .feature-tag {
-  background: light-dark(#f5f5f5, #242424);
-  color: light-dark(#1a1a1a, #e5e5e5);
+  background: light-dark(#f0f0f0, #242424);
+  color: light-dark(#666, #ccc);
   padding: 0.2rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;
@@ -1950,8 +1970,8 @@ function handlePhaseReorder() {
 }
 
 .tag-pill {
-  background: light-dark(#f5f5f5, #242424);
-  color: light-dark(#1a1a1a, #e5e5e5);
+  background: light-dark(#f0f0f0, #242424);
+  color: light-dark(#666, #ccc);
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -2116,14 +2136,6 @@ function handlePhaseReorder() {
   color: #999;
 }
 
-.btn-secondary {
-  color: #666;
-}
-
-.btn-secondary:hover {
-  background: #F0F0F0;
-  color: #333;
-}
 
 .drag-handle {
   width: 20px;
