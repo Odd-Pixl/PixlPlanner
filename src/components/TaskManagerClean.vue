@@ -1323,26 +1323,34 @@ function handlePhaseReorder() {
   flex-direction: column;
 }
 
-/* Increase height on mobile where screen space is more limited */
+/* Mobile: fill screen and remove padding/centering */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+  }
+  
   .modal {
-    max-height: 80vh;
-    height: 80vh;
+    max-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    max-width: none;
+    border-radius: 0;
+    border: none;
   }
 }
 
 /* Mobile landscape adjustments */
 @media (max-width: 768px) and (orientation: landscape) {
   .modal {
-    max-height: 85vh;
-    height: 85vh;
-    max-width: 600px;
-    width: 85%;
+    max-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    max-width: none;
   }
   
   .phase-modal {
-    max-height: 85vh;
-    height: 85vh;
+    max-height: 100vh;
+    height: 100vh;
   }
 }
 
@@ -2041,13 +2049,13 @@ function handlePhaseReorder() {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
-  background: light-dark(#f5f5f5, #1a1a1a);
+  /* border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a); */
+  /* background: light-dark(#f5f5f5, #1a1a1a); */
 }
 
 .modal-toolbar-bottom {
   border-bottom: none;
-  border-top: 1px solid light-dark(#e0e0e0, #404040);
+  /* border-top: 1px solid light-dark(#e0e0e0, #404040); */
   margin-top: auto;
 }
 
@@ -2111,6 +2119,13 @@ function handlePhaseReorder() {
   -webkit-overflow-scrolling: touch;
   /* Force scroll behavior even with short content */
   overscroll-behavior-y: contain;
+}
+
+/* Mobile: match main page padding */
+@media (max-width: 600px) {
+  .modal-content {
+    padding: 1.25rem;
+  }
 }
 
 /* Ensure modal content has minimum height to enable scrolling */
