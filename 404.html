@@ -3,11 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Pixl Planner</title>
-    <script type="module" crossorigin src="./assets/index-DDe5MhS-.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CNw0m3LL.css">
-  </head>
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f0f0f">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    html, body, #app {
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body, #app { background-color: #0f0f0f; }
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-B5TLyrEv.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-yvfBd6a0.css">
+</head>
   <body>
     <div id="app"></div>
   </body>
