@@ -1251,7 +1251,7 @@ function handlePhaseReorder() {
 }
 
 .btn-secondary {
-  background: light-dark(#f0f0f0, #333);
+  background: light-dark(#f0f0f0, #1a1a1a);
   color: light-dark(#333, #fff);
 }
 
@@ -1311,7 +1311,7 @@ function handlePhaseReorder() {
 }
 
 .modal {
-  background: light-dark(#fafafa, #0f0f0f);
+  background: light-dark(#fafafa, #151515);
   border-radius: 12px;
   max-width: 500px;
   width: 90%;
@@ -1394,13 +1394,13 @@ function handlePhaseReorder() {
   font-size: 1rem;
   transition: border-color 0.2s;
   font-family: inherit;
-  background: light-dark(white, #0f0f0f);
+  background: light-dark(white, #1a1a1a);
   color: light-dark(#1a1a1a, #e5e5e5);
 }
 
 .form-group select {
   border: none;
-  background: light-dark(#f0f0f0, #242424);
+  background: light-dark(#f0f0f0, #1a1a1a);
   border-radius: 8px;
   appearance: none;
   -webkit-appearance: none;
@@ -1844,7 +1844,7 @@ function handlePhaseReorder() {
 }
 
 .feature-tag {
-  background: light-dark(#f0f0f0, #242424);
+  background: light-dark(#f0f0f0, #1a1a1a);
   color: light-dark(#666, #ccc);
   padding: 0.2rem 0.5rem;
   border-radius: 8px;
@@ -2004,7 +2004,7 @@ function handlePhaseReorder() {
 }
 
 .tag-pill {
-  background: light-dark(#f0f0f0, #242424);
+  background: light-dark(#f0f0f0, #1a1a1a);
   color: light-dark(#666, #ccc);
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
@@ -2042,7 +2042,7 @@ function handlePhaseReorder() {
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
-  background: light-dark(#f5f5f5, #0f0f0f);
+  background: light-dark(#f5f5f5, #1a1a1a);
 }
 
 .modal-toolbar-bottom {
