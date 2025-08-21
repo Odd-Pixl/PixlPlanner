@@ -1582,8 +1582,8 @@ function handlePhaseReorder() {
   .btn .icon { width: 16px; height: 16px; }
 
   .progress-text { font-size: 0.8rem; min-width: 64px; }
-  /* Allow inline editor to stretch on mobile */
-  .edit-form { max-width: 100%; }
+  /* Domain select can stretch on mobile */
+  .edit-form .domain-group { max-width: 100%; }
 
   /* On mobile, hide right-aligned meta and show stacked mobile meta */
   .task-header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
@@ -1596,4 +1596,7 @@ function handlePhaseReorder() {
   /* Hide dependencies entirely on mobile */
   .task-dependencies { display: none !important; }
 }
+
+/* Constrain only the Domain field on larger screens */
+.edit-form .domain-group { max-width: 320px; }
 </style>
