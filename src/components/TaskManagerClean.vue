@@ -165,49 +165,28 @@
             
             <!-- Scrollable Content -->
             <div class="modal-content tags-content">
-              <!-- Selected Tags Section -->
-              <div v-if="selectedTags.length > 0" class="content-section">
-                <h4 class="section-title">Selected</h4>
-                <div v-for="tag in selectedTags" :key="tag.id" class="list-item" :class="{ 'item-unused': getTagUsageCount(tag.id) === 0 }">
-                  <label class="checkbox-container">
-                    <input
-                      type="checkbox"
-                      :checked="true"
-                      @change="toggleTag(tag.id, $event.target.checked)"
-                    />
-                    <span class="checkmark"></span>
-                  </label>
-                  <div class="item-content">
-                    <span class="item-name">{{ tag.name }}</span>
+              <!-- Single Tags List -->
+              <div class="tags-section">
+                <h4 class="tags-section-title">Tags</h4>
+                <div class="tags-list">
+                  <div v-for="tag in store.features" :key="tag.id" class="tag-item" :class="{ 'item-unused': getTagUsageCount(tag.id) === 0 }">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
+                        :checked="currentTask.features && currentTask.features.includes(tag.id)"
+                        @change="toggleTag(tag.id, $event.target.checked)"
+                      />
+                      <span class="checkmark"></span>
+                    </label>
+                    <div class="item-content">
+                      <span class="item-name">{{ tag.name }}</span>
+                    </div>
+                    <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
                   </div>
-                  <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Available Tags Section -->
-              <div class="content-section">
-                <h4 class="section-title">Tags</h4>
-                <div v-for="tag in availableTags" :key="tag.id" class="list-item" :class="{ 'item-unused': getTagUsageCount(tag.id) === 0 }">
-                  <label class="checkbox-container">
-                    <input
-                      type="checkbox"
-                      :checked="false"
-                      @change="toggleTag(tag.id, $event.target.checked)"
-                    />
-                    <span class="checkmark"></span>
-                  </label>
-                  <div class="item-content">
-                    <span class="item-name">{{ tag.name }}</span>
-                  </div>
-                  <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                  </button>
                 </div>
               </div>
             </div>
@@ -2087,6 +2066,7 @@ function handlePhaseReorder() {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* iOS-Style Modal Toolbars */
@@ -2244,14 +2224,17 @@ function handlePhaseReorder() {
   }
 }
 
-/* Ensure modal content has minimum height to enable scrolling */
-.modal-content > * {
+/* Ensure modal content has minimum height to enable scrolling - but not for tags */
+.modal-content > *:not(.tags-content) {
   min-height: calc(100% + 1px);
 }
 
 /* Tags content should have consistent vertical padding */
 .tags-content {
   padding: 1.5rem 0;
+  height: auto;
+  min-height: auto;
+  max-height: none;
 }
 
 /* Mobile: match main page padding */
@@ -2261,16 +2244,20 @@ function handlePhaseReorder() {
   }
 }
 
-.content-section {
-  margin-bottom: 2rem;
+/* Tags sections */
+.tags-section {
+  margin-bottom: 1.5rem;
+  height: auto;
+  min-height: auto;
+  flex: none;
 }
 
-.content-section:last-child {
+.tags-section:last-child {
   margin-bottom: 0;
 }
 
-.section-title {
-  margin: 0 0 1rem 0;
+.tags-section-title {
+  margin: 0 0 0.75rem 0;
   padding: 0 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
@@ -2278,27 +2265,46 @@ function handlePhaseReorder() {
   line-height: 1.3;
 }
 
-/* List Items */
-.list-item {
+@media (prefers-color-scheme: dark) {
+  .tags-section-title {
+    color: #fff;
+  }
+}
+
+/* Tags list containers */
+.tags-list {
+  border-top: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  background: light-dark(white, #1a1a1a);
+}
+
+/* Individual tag items */
+.tag-item {
   display: flex;
   align-items: center;
   padding: 0.75rem 1.5rem;
   gap: 0.75rem;
-  border-bottom: 1px solid light-dark(#e0e0e0, #404040);
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
   transition: background 0.2s;
   background: light-dark(white, #1a1a1a);
 }
 
-.list-item:last-child {
+.tag-item:last-child {
   border-bottom: none;
 }
 
-.list-item:hover {
-  background: light-dark(#f0f0f0, #2a2a2a);
+
+.tag-item .btn-icon {
+  margin-left: auto;
 }
 
-.list-item .btn-icon {
-  margin-left: auto;
+.tag-item .btn-icon.btn-danger {
+  color: #666;
+}
+
+.tag-item .btn-icon.btn-danger:hover {
+  color: #CC0000;
+  background: transparent;
 }
 
 .item-content {
@@ -2312,6 +2318,12 @@ function handlePhaseReorder() {
   font-weight: 500;
   color: #1a1a1a;
   line-height: 1.3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .item-name {
+    color: #fff;
+  }
 }
 
 .item-unused {
