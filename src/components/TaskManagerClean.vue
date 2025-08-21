@@ -2006,7 +2006,7 @@ function handlePhaseReorder() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
   background: light-dark(#f5f5f5, #0f0f0f);
 }
@@ -2018,28 +2018,42 @@ function handlePhaseReorder() {
 }
 
 .toolbar-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  font-size: 1.25rem;
+  flex: 1;
+  text-align: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 1rem;
   font-weight: 600;
   color: #1a1a1a;
-  line-height: 1.3;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 .toolbar-spacer {
   width: 48px;
-  height: 48px;
+  flex-shrink: 0;
+}
+
+.modal-toolbar .btn {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  min-width: auto !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.modal-toolbar .btn:hover {
+  background: none !important;
+  transform: none !important;
 }
 
 .toolbar-back-button {
   color: light-dark(#333, #ccc) !important;
-}
-
-.toolbar-back-button:hover {
-  color: light-dark(#333, #ccc) !important;
-  background: light-dark(#e0e0e0, #404040);
 }
 
 .toolbar-back-button .back-arrow {
