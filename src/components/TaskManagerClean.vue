@@ -113,6 +113,14 @@
                   <label>Description</label>
                   <textarea v-model="currentTask.description" rows="3"></textarea>
                 </div>
+                <div class="form-group domain-group">
+                  <label>Domain</label>
+                  <select v-model="currentTask.domain">
+                    <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
+                      {{ domain.name }}
+                    </option>
+                  </select>
+                </div>
                 <div class="form-group">
                   <div class="tags-section">
                     <div class="tags-header">
@@ -129,22 +137,9 @@
                     </div>
                   </div>
                 </div>
-                <div class="form-group domain-group">
-                  <label>Domain</label>
-                  <select v-model="currentTask.domain">
-                    <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                      {{ domain.name }}
-                    </option>
-                  </select>
-                </div>
               </form>
             </div>
             
-            <!-- Bottom Toolbar -->
-            <div class="modal-toolbar modal-toolbar-bottom">
-              <button type="button" @click="closeTaskModal" class="btn btn-secondary">Cancel</button>
-              <button type="submit" @click="handleTaskSubmit" class="btn btn-primary">{{ isEditingMode ? 'Save' : 'Add Task' }}</button>
-            </div>
           </div>
 
           <!-- Tags Screen -->
@@ -758,12 +753,15 @@ function openUnlockModal() {
   unlockError.value = ''
   showUnlockModal.value = true
   preventBodyScroll(true)
-  nextTick(() => {
-    if (unlockInputRef.value) {
-      unlockInputRef.value.focus()
-      unlockInputRef.value.select?.()
-    }
-  })
+  // Only auto-focus on desktop
+  if (!isMobile()) {
+    nextTick(() => {
+      if (unlockInputRef.value) {
+        unlockInputRef.value.focus()
+        unlockInputRef.value.select?.()
+      }
+    })
+  }
 }
 
 function closeUnlockModal() {
@@ -798,12 +796,15 @@ function openAddForm() {
   showTaskModal.value = true
   // Prevent body scrolling on all devices
   preventBodyScroll(true)
-  nextTick(() => {
-    if (taskNameInput.value) {
-      taskNameInput.value.focus()
-      taskNameInput.value.select?.()
-    }
-  })
+  // Only auto-focus on desktop
+  if (!isMobile()) {
+    nextTick(() => {
+      if (taskNameInput.value) {
+        taskNameInput.value.focus()
+        taskNameInput.value.select?.()
+      }
+    })
+  }
 }
 
 function openEditForm(taskId) {
@@ -812,12 +813,15 @@ function openEditForm(taskId) {
   showTaskModal.value = true
   // Prevent body scrolling on all devices
   preventBodyScroll(true)
-  nextTick(() => {
-    if (taskNameInput.value) {
-      taskNameInput.value.focus()
-      taskNameInput.value.select?.()
-    }
-  })
+  // Only auto-focus on desktop
+  if (!isMobile()) {
+    nextTick(() => {
+      if (taskNameInput.value) {
+        taskNameInput.value.focus()
+        taskNameInput.value.select?.()
+      }
+    })
+  }
 }
 
 function closeTaskModal() {
@@ -904,6 +908,11 @@ function attemptUnlock() {
 
 // Body scroll prevention for mobile compatibility
 let scrollPosition = 0
+
+// Mobile detection
+function isMobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768
+}
 
 function preventBodyScroll(prevent) {
   if (prevent) {
@@ -1064,11 +1073,30 @@ function handlePhaseReorder() {
 </script>
 
 <style scoped>
+/* Force proper color scheme handling */
+* {
+  color-scheme: light dark;
+}
+
+/* Ensure body fills viewport and uses page background */
+:global(html), :global(body) {
+  background: light-dark(#fafafa, #0f0f0f) !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .task-manager {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Background matches task cards */
+  background: light-dark(#fafafa, #0f0f0f);
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
 }
 
 .header {
@@ -1121,7 +1149,6 @@ function handlePhaseReorder() {
   font-size: 0.8rem;
   color: #666;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .progress-container {
@@ -1134,7 +1161,7 @@ function handlePhaseReorder() {
 .progress-bar {
   flex: 1;
   height: 8px;
-  background: #E5E5E5;
+  background: light-dark(#f0f0f0, #333);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -1182,12 +1209,12 @@ function handlePhaseReorder() {
 }
 
 .btn-secondary {
-  background: #F2F2F2;
-  color: #333;
+  background: light-dark(#f0f0f0, #333);
+  color: light-dark(#333, #ccc);
 }
 
 .btn-secondary:hover {
-  background: #E5E5E5;
+  background: light-dark(#e0e0e0, #404040);
 }
 
 .btn-warning {
@@ -1230,7 +1257,7 @@ function handlePhaseReorder() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1238,24 +1265,52 @@ function handlePhaseReorder() {
   backdrop-filter: blur(4px);
   overflow: hidden;
   touch-action: none;
+  /* Extend under safe areas on iOS - use negative margins to extend backdrop */
+  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  margin-left: calc(-1 * env(safe-area-inset-left, 0px));
+  margin-right: calc(-1 * env(safe-area-inset-right, 0px));
+  /* But add padding for modal content positioning */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  /* Use viewport units that account for dynamic viewport */
+  height: 100dvh;
+  width: 100dvw;
 }
 
 .modal {
-  background: white;
-  border-radius: 16px;
+  background: light-dark(#fafafa, #0f0f0f);
+  border-radius: 12px;
   max-width: 500px;
   width: 90%;
-  max-height: 80vh;
-  height: 80vh;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 53vh;
+  height: 53vh;
+  border: 1px solid light-dark(#e0e0e0, #2a2a2a);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
+/* Increase height on mobile where screen space is more limited */
+@media (max-width: 768px) {
+  .modal {
+    max-height: 80vh;
+    height: 80vh;
+  }
+}
+
 .phase-modal {
   max-width: 600px;
-  height: 80vh;
+  height: 53vh;
+}
+
+/* Increase height on mobile for phase modal too */
+@media (max-width: 768px) {
+  .phase-modal {
+    height: 80vh;
+  }
 }
 
 .modal h3 {
@@ -1289,18 +1344,20 @@ function handlePhaseReorder() {
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #E5E5E5;
+  border: 2px solid light-dark(#e0e0e0, #555);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
   font-family: inherit;
+  background: light-dark(white, #0f0f0f);
+  color: light-dark(#1a1a1a, #e5e5e5);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #007AFF;
+  border-color: light-dark(#999, #777);
 }
 
 .form-actions {
@@ -1311,11 +1368,11 @@ function handlePhaseReorder() {
 }
 
 .add-phase-form {
-  background: #F8F9FA;
+  background: light-dark(#f5f5f5, #2a2a2a);
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
-  border: 1px solid #E9ECEF;
+  border: 1px solid light-dark(#e0e0e0, #404040);
 }
 
 .add-phase-form .form-row {
@@ -1327,17 +1384,21 @@ function handlePhaseReorder() {
 .phase-name-input {
   flex: 2;
   padding: 0.5rem;
-  border: 1px solid #DDD;
+  border: 1px solid light-dark(#ddd, #555);
   border-radius: 4px;
   font-size: 0.9rem;
+  background: light-dark(white, #0f0f0f);
+  color: light-dark(#1a1a1a, #e5e5e5);
 }
 
 .phase-goal-input {
   flex: 3;
   padding: 0.5rem;
-  border: 1px solid #DDD;
+  border: 1px solid light-dark(#ddd, #555);
   border-radius: 4px;
   font-size: 0.9rem;
+  background: light-dark(white, #0f0f0f);
+  color: light-dark(#1a1a1a, #e5e5e5);
 }
 
 .modal-header {
@@ -1367,22 +1428,23 @@ function handlePhaseReorder() {
 
 .phase-list-compact {
   max-height: 400px;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   margin-bottom: 1rem;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .phase-item-compact {
-  background: white;
-  border: 1px solid #E5E5E5;
+  background: light-dark(white, #1a1a1a);
+  border: 1px solid light-dark(#e0e0e0, #404040);
   border-radius: 6px;
   margin-bottom: 0.5rem;
   transition: all 0.2s;
 }
 
 .phase-item-compact:hover {
-  border-color: #D0D0D0;
+  border-color: light-dark(#d0d0d0, #555);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -1420,8 +1482,8 @@ function handlePhaseReorder() {
 
 .task-count-compact {
   font-size: 0.8rem;
-  color: #999;
-  background: #F8F9FA;
+  color: light-dark(#666, #999);
+  background: light-dark(#f0f0f0, #333);
   padding: 0.2rem 0.5rem;
   border-radius: 12px;
   white-space: nowrap;
@@ -1440,8 +1502,8 @@ function handlePhaseReorder() {
 
 .phase-edit-form {
   padding: 1rem;
-  background: #FAFAFA;
-  border-top: 1px solid #E5E5E5;
+  background: light-dark(#f5f5f5, #2a2a2a);
+  border-top: 1px solid light-dark(#e0e0e0, #404040);
   margin: -1px;
   border-radius: 0 0 6px 6px;
 }
@@ -1468,12 +1530,13 @@ function handlePhaseReorder() {
 
 .dependency-list {
   max-height: 250px;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
-  border: 1px solid #E5E5E5;
+  border: 1px solid light-dark(#e0e0e0, #404040);
   border-radius: 8px;
-  background: #FAFAFA;
+  background: light-dark(#f5f5f5, #2a2a2a);
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .dependency-item {
@@ -1490,7 +1553,7 @@ function handlePhaseReorder() {
 }
 
 .dependency-item:hover {
-  background: #F0F0F0;
+  background: light-dark(#f0f0f0, #2a2a2a);
 }
 
 .dependency-info {
@@ -1513,16 +1576,16 @@ function handlePhaseReorder() {
 }
 
 .phase-group {
-  background: white;
+  background: light-dark(white, #0f0f0f);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid light-dark(#e0e0e0, #2a2a2a);
   overflow: hidden;
 }
 
 .phase-title {
-  background: #F0F2F7;
+  background: light-dark(#F8F9FA, #0f0f0f);
   padding: 1rem 1.5rem 1rem 0.5rem;
-  border-bottom: 1px solid #E5E5E5;
+  border-bottom: 1px solid light-dark(#E5E5E5, #2a2a2a);
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -1544,13 +1607,13 @@ function handlePhaseReorder() {
 }
 
 .phase-goal-badge {
-  background: #E8F2FF;
-  color: #007AFF;
+  background: light-dark(#f0f0f0, #333);
+  color: light-dark(#666, #ccc);
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
-  border: 1px solid #BBD8FF;
+  border: 1px solid light-dark(#d0d0d0, #555);
 }
 
 .phase-progress {
@@ -1564,8 +1627,9 @@ function handlePhaseReorder() {
 }
 
 .task-item {
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid light-dark(#e0e0e0, #333);
   transition: all 0.2s;
+  background: transparent;
 }
 
 .task-item:last-child {
@@ -1573,7 +1637,7 @@ function handlePhaseReorder() {
 }
 
 .task-item:hover {
-  background: #FAFAFA;
+  background: light-dark(#f8f8f8, #1a1a1a);
 }
 
 .task-item.completed {
@@ -1608,20 +1672,20 @@ function handlePhaseReorder() {
   position: relative;
   height: 20px;
   width: 20px;
-  background-color: #fff;
-  border: 2px solid #DDD;
+  background-color: light-dark(#fff, #1a1a1a);
+  border: 2px solid light-dark(#ddd, #555);
   border-radius: 4px;
   display: block;
   transition: all 0.2s;
 }
 
 .checkbox-container:hover .checkmark {
-  border-color: #007AFF;
+  border-color: light-dark(#999, #777);
 }
 
 .checkbox-container input:checked ~ .checkmark {
-  background-color: #007AFF;
-  border-color: #007AFF;
+  background-color: light-dark(#666, #888);
+  border-color: light-dark(#666, #888);
 }
 
 .checkmark:after {
@@ -1673,11 +1737,9 @@ function handlePhaseReorder() {
 .domain-badge {
   display: inline-block;
   padding: 0.2rem 0.6rem;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .domain-editor { background: #E8F4FD; color: #0066CC; }
@@ -1702,13 +1764,13 @@ function handlePhaseReorder() {
 }
 
 .feature-tag {
-  background: #F8F9FA;
-  color: #495057;
+  background: light-dark(#f5f5f5, #2a2a2a);
+  color: light-dark(#1a1a1a, #e5e5e5);
   padding: 0.2rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 500;
-  border: 1px solid #E9ECEF;
+  font-weight: 400;
+  border: 2px solid light-dark(#e0e0e0, #404040);
 }
 
 
@@ -1746,8 +1808,8 @@ function handlePhaseReorder() {
 }
 
 .btn-icon:hover {
-  background: #F0F0F0;
-  color: #333;
+  background: light-dark(#f0f0f0, #2a2a2a);
+  color: light-dark(#333, #ccc);
 }
 
 .btn-danger:hover {
@@ -1760,8 +1822,8 @@ function handlePhaseReorder() {
 }
 
 .btn-accent:hover {
-  background: #F0F0F0;
-  color: #0056CC;
+  background: light-dark(#f0f0f0, #2a2a2a);
+  color: light-dark(#0056CC, #77a3ff);
 }
 
 .edit-form {
@@ -1863,13 +1925,13 @@ function handlePhaseReorder() {
 }
 
 .tag-pill {
-  background: #F8F9FA;
-  color: #495057;
-  padding: 0.375rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border: 1px solid #E9ECEF;
+  background: light-dark(#f5f5f5, #2a2a2a);
+  color: light-dark(#1a1a1a, #e5e5e5);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  border: 2px solid light-dark(#e0e0e0, #404040);
   display: inline-flex;
   align-items: center;
 }
@@ -1901,13 +1963,13 @@ function handlePhaseReorder() {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #E5E5E5;
-  background: #F8F9FA;
+  border-bottom: 1px solid light-dark(#e0e0e0, #404040);
+  background: light-dark(#f5f5f5, #0f0f0f);
 }
 
 .modal-toolbar-bottom {
   border-bottom: none;
-  border-top: 1px solid #E5E5E5;
+  border-top: 1px solid light-dark(#e0e0e0, #404040);
   margin-top: auto;
 }
 
@@ -1928,33 +1990,40 @@ function handlePhaseReorder() {
 }
 
 .toolbar-back-button {
-  color: #333 !important;
+  color: light-dark(#333, #ccc) !important;
 }
 
 .toolbar-back-button:hover {
-  color: #333 !important;
-  background: #E5E5E5;
+  color: light-dark(#333, #ccc) !important;
+  background: light-dark(#e0e0e0, #404040);
 }
 
 .toolbar-back-button .back-arrow {
   font-size: 20px;
   font-weight: bold;
   line-height: 1;
-  color: #333;
+  color: light-dark(#333, #ccc);
 }
 
 .toolbar-back-button:hover .back-arrow {
-  color: #333;
+  color: light-dark(#333, #ccc);
 }
 
 /* Modal Content Area */
 .modal-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding: 1.5rem;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
+  /* Force scroll behavior even with short content */
+  overscroll-behavior-y: contain;
+}
+
+/* Ensure modal content has minimum height to enable scrolling */
+.modal-content > * {
+  min-height: calc(100% + 1px);
 }
 
 /* Tags content has no side padding */
@@ -1985,9 +2054,9 @@ function handlePhaseReorder() {
   align-items: center;
   padding: 0.75rem 1.5rem;
   gap: 0.75rem;
-  border-bottom: 1px solid #E5E5E5;
+  border-bottom: 1px solid light-dark(#e0e0e0, #404040);
   transition: background 0.2s;
-  background: white;
+  background: light-dark(white, #1a1a1a);
 }
 
 .list-item:last-child {
@@ -1995,7 +2064,7 @@ function handlePhaseReorder() {
 }
 
 .list-item:hover {
-  background: #F0F0F0;
+  background: light-dark(#f0f0f0, #2a2a2a);
 }
 
 .list-item .btn-icon {
