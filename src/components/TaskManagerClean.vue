@@ -7,7 +7,7 @@
 
     <div class="controls">
       <div class="control-group">
-        <button v-if="auth.isUnlocked" @click="showAddForm = true" class="btn btn-primary btn-icon-only" title="Add Task">
+        <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
@@ -52,7 +52,7 @@
     <!-- Mobile-only lock/unlock under stats + progress for touch devices -->
     <div class="mobile-only mobile-lock-row">
       <!-- Editing buttons first on mobile -->
-      <button v-if="auth.isUnlocked" @click="showAddForm = true" class="btn btn-primary btn-icon-only" title="Add Task">
+      <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
@@ -687,6 +687,16 @@ function openUnlockModal() {
 
 function closeUnlockModal() {
   showUnlockModal.value = false
+}
+
+function openAddForm() {
+  showAddForm.value = true
+  nextTick(() => {
+    if (newTaskNameInput.value) {
+      newTaskNameInput.value.focus()
+      newTaskNameInput.value.select?.()
+    }
+  })
 }
 
 function attemptUnlock() {
