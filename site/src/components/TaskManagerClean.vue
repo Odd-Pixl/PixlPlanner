@@ -7,21 +7,23 @@
 
     <div class="controls">
       <div class="control-group">
-        <button @click="showAddForm = true" class="btn btn-primary btn-icon-only" title="Add Task">
+        <button v-if="auth.isUnlocked" @click="showAddForm = true" class="btn btn-primary btn-icon-only" title="Add Task">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
         </button>
-        <button @click="showPhaseForm = true" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+        <button v-if="auth.isUnlocked" @click="showPhaseForm = true" class="btn btn-secondary btn-icon-only" title="Manage Phases">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
         </button>
-        <button @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
+        <button v-if="auth.isUnlocked" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
         </button>
+        <button v-if="!auth.isUnlocked" @click="openUnlockModal" class="btn btn-secondary" title="Unlock editing">Unlock</button>
+        <button v-else @click="auth.lock()" class="btn btn-secondary" title="Lock editing">Lock</button>
       </div>
       <div class="stats">
         <div class="stat-item">
@@ -76,6 +78,22 @@
       </div>
     </div>
 
+    <!-- Unlock Editing Modal -->
+    <div v-if="showUnlockModal" class="modal-overlay" @click="closeUnlockModal">
+      <div class="modal" @click.stop>
+        <h3>Unlock Editing</h3>
+        <div class="form-group">
+          <label>Password</label>
+          <input v-model="unlockPassword" type="password" @keyup.enter="attemptUnlock" />
+        </div>
+        <p v-if="unlockError" class="error-text">{{ unlockError }}</p>
+        <div class="form-actions">
+          <button @click="closeUnlockModal" class="btn btn-secondary">Cancel</button>
+          <button @click="attemptUnlock" class="btn btn-primary">Unlock</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Phase Management Modal -->
     <div v-if="showPhaseForm" class="modal-overlay" @click="showPhaseForm = false">
       <div class="modal phase-modal" @click.stop>
@@ -106,6 +124,7 @@
             handle=".drag-handle"
             @end="handlePhaseReorder"
             animation="150"
+            :disabled="!auth.isUnlocked"
             class="phase-draggable-list"
           >
             <template #item="{ element: phase }">
@@ -119,13 +138,13 @@
                     <span class="task-count-compact">{{ (phase.tasks || []).length }} tasks</span>
                   </div>
                   <div class="phase-actions">
-                    <button @click.stop="togglePhaseEdit(phase.id)" class="btn-icon btn-small" title="Edit">
+                    <button v-if="auth.isUnlocked" @click.stop="togglePhaseEdit(phase.id)" class="btn-icon btn-small" title="Edit">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
-                    <button @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger btn-small" title="Delete">
+                    <button v-if="auth.isUnlocked" @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger btn-small" title="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
@@ -216,6 +235,7 @@
             v-model="phase.tasks"
             handle=".task-drag-handle"
             animation="150"
+            :disabled="!auth.isUnlocked"
             class="task-draggable-list"
             group="tasks"
           >
@@ -226,11 +246,12 @@
                   <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
 
                   <!-- Completion Checkbox -->
-                  <label class="checkbox-container">
+                  <label class="checkbox-container" :class="{ disabled: !auth.isUnlocked }">
                     <input
                       type="checkbox"
                       :checked="taskMap[taskId]?.completed"
-                      @change="updateTaskCompletion(taskId, $event.target.checked)"
+                      :disabled="!auth.isUnlocked"
+                      @change="auth.isUnlocked && updateTaskCompletion(taskId, $event.target.checked)"
                     />
                     <span class="checkmark"></span>
                   </label>
@@ -264,19 +285,19 @@
                   </div>
 
                   <!-- Task Actions -->
-                  <div class="task-actions">
-                    <button @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
+                  <div v-if="auth.isUnlocked" class="task-actions">
+                    <button v-if="auth.isUnlocked" @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
-                    <button @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" title="Edit Dependencies">
+                    <button v-if="auth.isUnlocked" @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" title="Edit Dependencies">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                       </svg>
                     </button>
-                    <button @click="handleRemoveTask(taskId)" class="btn-icon btn-danger" title="Delete">
+                    <button v-if="auth.isUnlocked" @click="handleRemoveTask(taskId)" class="btn-icon btn-danger" title="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
@@ -330,6 +351,7 @@
             v-model="unassignedTaskIds"
             handle=".task-drag-handle"
             animation="150"
+            :disabled="!auth.isUnlocked"
             class="task-draggable-list"
             group="tasks"
           >
@@ -364,7 +386,7 @@
                     </p>
                   </div>
 
-                  <div class="task-actions">
+                  <div v-if="auth.isUnlocked" class="task-actions">
                     <button @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -395,15 +417,20 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useProjectStore } from '../stores/project-simple.js'
+import { useAuthStore } from '../stores/auth.js'
 import draggable from 'vuedraggable'
 
 const store = useProjectStore()
+const auth = useAuthStore()
 
 // Local state
 const showAddForm = ref(false)
 const showPhaseForm = ref(false)
 const showAddPhaseForm = ref(false)
 const showDependencyForm = ref(false)
+const showUnlockModal = ref(false)
+const unlockPassword = ref('')
+const unlockError = ref('')
 const editingTask = ref(null)
 const editingPhase = ref(null)
 const editingDependencies = ref(null)
@@ -506,6 +533,7 @@ function handleRemoveTask(taskId) {
 }
 
 function toggleEdit(taskId) {
+  if (!auth.isUnlocked) return
   editingTask.value = editingTask.value === taskId ? null : taskId
 }
 
@@ -518,8 +546,29 @@ function updateTaskCompletion(taskId, completed) {
 }
 
 function handleResetData() {
+  if (!auth.isUnlocked) return
   if (confirm('Are you sure you want to reset all data to defaults? This will remove all your progress and custom tasks/phases.')) {
     store.resetToDefaults()
+  }
+}
+
+function openUnlockModal() {
+  unlockPassword.value = ''
+  unlockError.value = ''
+  showUnlockModal.value = true
+}
+
+function closeUnlockModal() {
+  showUnlockModal.value = false
+}
+
+function attemptUnlock() {
+  unlockError.value = ''
+  const ok = auth.unlock(unlockPassword.value)
+  if (ok) {
+    showUnlockModal.value = false
+  } else {
+    unlockError.value = 'Incorrect password'
   }
 }
 
@@ -868,6 +917,11 @@ function handlePhaseReorder() {
   color: #666;
   font-size: 0.9rem;
   font-weight: normal;
+}
+
+.error-text {
+  color: #CC0000;
+  margin-top: 0.5rem;
 }
 
 .phase-list-compact {
