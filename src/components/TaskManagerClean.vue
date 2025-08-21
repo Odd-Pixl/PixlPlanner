@@ -533,12 +533,7 @@
 
                   <!-- Task Actions -->
                   <div v-if="auth.isUnlocked" class="task-actions" @click.stop>
-                    <button v-if="auth.isUnlocked" @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" :class="{ 'btn-accent': taskMap[taskId]?.dependsOn && taskMap[taskId]?.dependsOn.length > 0 }" title="Edit Dependencies">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                      </svg>
-                    </button>
-                    <button v-if="auth.isUnlocked" @click="handleRemoveTask(taskId)" class="btn-icon btn-danger" title="Delete">
+                    <button v-if="auth.isUnlocked" @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
@@ -608,12 +603,7 @@
                   </div>
 
                   <div v-if="auth.isUnlocked" class="task-actions">
-                    <button @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" :class="{ 'btn-accent': taskMap[taskId]?.dependsOn && taskMap[taskId]?.dependsOn.length > 0 }" title="Edit Dependencies">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                      </svg>
-                    </button>
-                    <button @click="handleRemoveTask(taskId)" class="btn-icon btn-danger" title="Delete">
+                    <button @click="handleRemoveTask(task.id)" class="btn-icon btn-danger" title="Delete">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
