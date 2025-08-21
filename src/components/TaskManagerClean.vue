@@ -261,12 +261,26 @@
           </div>
           <div class="phase-title-content">
             <h2>{{ phase.name }}</h2>
+            <!-- Overlayed outlined circular progress to the left of the title -->
+            <span
+              class="phase-progress-ring"
+              :aria-label="`${getPhaseCompletedTasks(getTasksForPhase(phase.id))} of ${getTasksForPhase(phase.id).length} completed`"
+              role="img"
+            >
+              <svg viewBox="0 0 36 36" class="ring-svg">
+                <circle class="ring-track" cx="18" cy="18" r="15"></circle>
+                <circle
+                  class="ring-progress"
+                  cx="18"
+                  cy="18"
+                  r="15"
+                  :style="{ strokeDasharray: '100 100', strokeDashoffset: (100 - getPhaseProgressPercent(phase.id)).toFixed(2) }"
+                ></circle>
+              </svg>
+            </span>
           </div>
           <div class="phase-right">
             <span v-if="phase.goal" class="phase-goal-badge">{{ phase.goal }}</span>
-            <span class="phase-progress">
-              {{ getPhaseCompletedTasks(getTasksForPhase(phase.id)) }} / {{ getTasksForPhase(phase.id).length }} completed
-            </span>
           </div>
         </div>
 
@@ -281,12 +295,12 @@
           >
             <template #item="{ element: taskId }">
               <div class="task-item" :class="{ completed: taskMap[taskId]?.completed, editing: editingTask === taskId }">
-                <div class="task-row">
+                <div class="task-row" @click="toggleEdit(taskId)">
                   <!-- Drag Handle -->
                   <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
 
                   <!-- Completion Checkbox -->
-                  <label class="checkbox-container" :class="{ disabled: !auth.isUnlocked }">
+                  <label class="checkbox-container" :class="{ disabled: !auth.isUnlocked }" @click.stop>
                     <input
                       type="checkbox"
                       :checked="taskMap[taskId]?.completed"
@@ -297,7 +311,7 @@
                   </label>
 
                   <!-- Task Content -->
-                  <div class="task-content" @click="toggleEdit(taskId)">
+                  <div class="task-content">
                     <div class="task-header">
                       <h3 class="task-name" :class="{ completed: taskMap[taskId]?.completed }">
                         {{ taskMap[taskId]?.name }}
@@ -322,10 +336,16 @@
                         {{ store.tasks.find(t => t.id === depId)?.name || depId }}
                       </span>
                     </div>
+                    <!-- Mobile-only meta stacked under tags/dependencies -->
+                    <div class="task-meta-mobile mobile-only">
+                      <span class="domain-badge" :class="`domain-${taskMap[taskId]?.domain}`">
+                        {{ store.getDomainById(taskMap[taskId]?.domain)?.name || taskMap[taskId]?.domain }}
+                      </span>
+                    </div>
                   </div>
 
                   <!-- Task Actions -->
-                  <div v-if="auth.isUnlocked" class="task-actions">
+                  <div v-if="auth.isUnlocked" class="task-actions" @click.stop>
                     <button v-if="auth.isUnlocked" @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -352,18 +372,18 @@
                       <label>Task Name</label>
                       <input v-model="taskMap[taskId].name" type="text" />
                     </div>
-                    <div class="form-group">
-                      <label>Domain</label>
-                      <select v-model="taskMap[taskId].domain">
-                        <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                          {{ domain.name }}
-                        </option>
-                      </select>
-                    </div>
                   </div>
                   <div class="form-group">
                     <label>Description</label>
                     <textarea v-model="taskMap[taskId].description" rows="3"></textarea>
+                  </div>
+                  <div class="form-group domain-group">
+                    <label>Domain</label>
+                    <select v-model="taskMap[taskId].domain">
+                      <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
+                        {{ domain.name }}
+                      </option>
+                    </select>
                   </div>
                   <div class="form-actions">
                     <button @click="editingTask = null" class="btn btn-secondary">Done</button>
@@ -550,6 +570,25 @@ function getPhaseCompletedTasks(tasks) {
 function getPhaseCompletedTasksByIds(taskIds) {
   const set = new Set(taskIds)
   return store.tasks.filter(t => set.has(t.id) && t.completed).length
+}
+
+// Degrees for circular progress (0-360) for a phase by id
+function getPhaseProgressDegrees(phaseId) {
+  const tasks = getTasksForPhase(phaseId)
+  const total = tasks.length
+  if (total === 0) return 0
+  const done = getPhaseCompletedTasks(tasks)
+  const ratio = done / total
+  return Math.round(ratio * 360)
+}
+
+// Percent (0-100) for strokeDashoffset calc
+function getPhaseProgressPercent(phaseId) {
+  const tasks = getTasksForPhase(phaseId)
+  const total = tasks.length
+  if (total === 0) return 0
+  const done = getPhaseCompletedTasks(tasks)
+  return (done / total) * 100
 }
 
 // (removed) phase-level toggle helpers
@@ -1153,15 +1192,17 @@ function handlePhaseReorder() {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1a1a1a;
+  line-height: 1.3;
 }
 
 .phase-goal-badge {
-  background: #F3F4F6;
-  color: #6B7280;
+  background: #E8F2FF;
+  color: #007AFF;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px solid #BBD8FF;
 }
 
 .phase-progress {
@@ -1197,6 +1238,7 @@ function handlePhaseReorder() {
 }
 
 .task-row { display: grid; grid-template-columns: 16px 24px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 1rem 0.5rem; gap: 0.5rem; }
+.task-row { cursor: pointer; }
 
 .checkbox-container {
   position: relative;
@@ -1277,6 +1319,8 @@ function handlePhaseReorder() {
   align-items: center;
   gap: 0.5rem;
 }
+
+.task-meta-mobile { display: none; margin-top: 0.25rem; }
 
 .domain-badge {
   display: inline-block;
@@ -1454,6 +1498,34 @@ function handlePhaseReorder() {
 .task-drag-handle.placeholder { opacity: 0; pointer-events: none; }
 .checkbox-placeholder { display: inline-block; width: 20px; height: 20px; }
 
+.phase-title-content { position: relative; }
+
+.phase-progress-ring {
+  position: absolute;
+  left: -32px; /* shift into the gutter, without affecting title flow */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+}
+
+.ring-svg { width: 20px; height: 20px; display: block; }
+.ring-track {
+  fill: none;
+  stroke: #E5E5E5;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.ring-progress {
+  fill: none;
+  stroke: #007AFF;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
 .task-drag-handle:hover {
   color: #999;
   cursor: grab;
@@ -1481,6 +1553,9 @@ function handlePhaseReorder() {
 
   /* Hide top-left editing controls on mobile; use mobile row below progress */
   .control-group { display: none; }
+
+  /* Hide goal badge on mobile to give title more room */
+  .phase-goal-badge { display: none; }
 }
 
 /* Hide mobile-only controls by default (desktop / non-portrait) */
@@ -1507,5 +1582,18 @@ function handlePhaseReorder() {
   .btn .icon { width: 16px; height: 16px; }
 
   .progress-text { font-size: 0.8rem; min-width: 64px; }
+  /* Allow inline editor to stretch on mobile */
+  .edit-form { max-width: 100%; }
+
+  /* On mobile, hide right-aligned meta and show stacked mobile meta */
+  .task-header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  .task-header .task-meta { display: none; }
+  .task-meta-mobile { display: block; }
+  .task-features { justify-content: flex-start; }
+  .task-features, .task-meta-mobile, .task-dependencies { margin-left: 0; }
+  .task-meta-mobile { margin-top: 0.25rem; }
+  .task-content { width: 100%; }
+  /* Hide dependencies entirely on mobile */
+  .task-dependencies { display: none !important; }
 }
 </style>
