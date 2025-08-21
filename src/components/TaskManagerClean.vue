@@ -385,9 +385,7 @@
                       </option>
                     </select>
                   </div>
-                  <div class="form-actions">
-                    <button @click="editingTask = null" class="btn btn-secondary">Done</button>
-                  </div>
+
                 </div>
               </div>
             </template>
@@ -1184,7 +1182,7 @@ function handlePhaseReorder() {
 
 .phase-left { display: grid; grid-template-columns: 16px 20px; align-items: center; gap: 0.5rem; }
 
-.phase-title-content { display: flex; align-items: center; gap: 0.75rem; }
+.phase-title-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
 .phase-right { display: flex; align-items: center; gap: 0.75rem; }
 
 .phase-title h2 {
@@ -1193,6 +1191,7 @@ function handlePhaseReorder() {
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.3;
+  flex: 1;
 }
 
 .phase-goal-badge {
@@ -1312,6 +1311,7 @@ function handlePhaseReorder() {
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.3;
+  flex: 1;
 }
 
 .task-meta {
@@ -1434,6 +1434,9 @@ function handlePhaseReorder() {
   margin: -1rem -0.25rem 0 -0.25rem;
 }
 
+/* Make title input span full width like description in edit form */
+.edit-form .form-row { display: block; }
+
 .drag-handle {
   width: 20px;
   height: 20px;
@@ -1498,7 +1501,7 @@ function handlePhaseReorder() {
 .task-drag-handle.placeholder { opacity: 0; pointer-events: none; }
 .checkbox-placeholder { display: inline-block; width: 20px; height: 20px; }
 
-.phase-title-content { position: relative; }
+.phase-title-content { position: relative; flex: 1; }
 
 .phase-progress-ring {
   position: absolute;
