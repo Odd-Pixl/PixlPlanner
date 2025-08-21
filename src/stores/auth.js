@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { sha256 } from 'js-sha256'
 
 const UNLOCK_KEY = 'pixl-planner-editor-unlocked'
 
@@ -28,9 +29,16 @@ export const useAuthStore = defineStore('auth', () => {
     if (!password) return false
     try {
       const enc = new TextEncoder().encode(password)
-      const digest = await crypto.subtle.digest('SHA-256', enc)
-      const hashArray = Array.from(new Uint8Array(digest))
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+      const subtle = (globalThis && globalThis.crypto && globalThis.crypto.subtle) ? globalThis.crypto.subtle : null
+      let hashHex
+      if (subtle) {
+        const digest = await subtle.digest('SHA-256', enc)
+        const hashArray = Array.from(new Uint8Array(digest))
+        hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+      } else {
+        // Fallback for non-secure origins (e.g., LAN over http) so mobile can unlock in dev
+        hashHex = sha256(password)
+      }
       if (storedHash && hashHex !== storedHash) return false
       isUnlocked.value = true
       save()

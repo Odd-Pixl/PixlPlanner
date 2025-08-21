@@ -23,6 +23,7 @@
           </svg>
         </button>
 
+
       </div>
       <div class="stats">
         <div class="stat-item">
@@ -46,6 +47,46 @@
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
       <span class="progress-text">{{ Math.round(progressPercent) }}% Complete</span>
+    </div>
+
+    <!-- Mobile-only lock/unlock under stats + progress for touch devices -->
+    <div class="mobile-only mobile-lock-row">
+      <!-- Editing buttons first on mobile -->
+      <button v-if="auth.isUnlocked" @click="showAddForm = true" class="btn btn-primary btn-icon-only" title="Add Task">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+      </button>
+      <button v-if="auth.isUnlocked" @click="showPhaseForm = true" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </button>
+
+      <button
+        class="btn btn-secondary btn-icon-only"
+        :title="auth.isUnlocked ? 'Lock' : 'Unlock'"
+        aria-label="Toggle lock"
+        @click="auth.isUnlocked ? auth.lock() : openUnlockModal()"
+      >
+        <!-- Unlocked state shows an open padlock -->
+        <svg v-if="auth.isUnlocked" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11V7a4 4 0 10-8 0"/>
+          <rect x="6" y="11" width="12" height="10" rx="2" ry="2" stroke-width="2"/>
+        </svg>
+        <!-- Locked state shows a closed padlock -->
+        <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4"/>
+          <rect x="6" y="11" width="12" height="10" rx="2" ry="2" stroke-width="2"/>
+        </svg>
+      </button>
+
+      <!-- Reset moves to the end on mobile -->
+      <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Add Task Form Modal -->
@@ -1420,5 +1461,51 @@ function handlePhaseReorder() {
 
 .task-drag-handle:active {
   cursor: grabbing;
+}
+
+/* Mobile portrait tweaks */
+@media (max-width: 600px) and (orientation: portrait) {
+  .controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Only show padlock on mobile portrait */
+  .mobile-only { display: inline-flex; }
+
+  /* Hide top-left editing controls on mobile; use mobile row below progress */
+  .control-group { display: none; }
+}
+
+/* Hide mobile-only controls by default (desktop / non-portrait) */
+.mobile-only { display: none; }
+
+/* Mobile lock row layout */
+.mobile-lock-row {
+  display: none;
+  justify-content: flex-start;
+  margin: 0.5rem 0 1.25rem 0;
+  gap: 0.5rem;
+}
+
+/* Use smaller buttons/icons on mobile portrait */
+@media (max-width: 600px) and (orientation: portrait) {
+  .mobile-lock-row { display: flex; justify-content: flex-start; }
+
+  .btn.btn-icon-only {
+    padding: 0.5rem;
+    min-width: 40px;
+    height: 40px;
+  }
+
+  .btn .icon { width: 16px; height: 16px; }
+
+  .progress-text { font-size: 0.8rem; min-width: 64px; }
 }
 </style>
