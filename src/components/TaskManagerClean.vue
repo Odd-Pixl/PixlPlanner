@@ -2018,16 +2018,27 @@ function handlePhaseReorder() {
   margin-bottom: 0;
 }
 
-.tags-header {
+ .tags-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
-}
-
-.tags-header label {
+ }
+ 
+ .tags-header label {
   margin-bottom: 0;
-}
+ }
+ 
+ /* Ensure the inline Edit button in the tags header uses secondary grey text */
+ .tags-header .btn.btn-secondary {
+  color: #666;
+ }
+ 
+ @media (prefers-color-scheme: dark) {
+  .tags-header .btn.btn-secondary {
+    color: #ccc;
+  }
+ }
 
 .current-tags {
   display: flex;
