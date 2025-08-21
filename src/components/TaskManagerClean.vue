@@ -28,11 +28,11 @@
       <div class="stats">
         <div class="stat-item">
           <span class="stat-number">{{ completedTasks }}</span>
-          <span class="stat-label">completed</span>
+          <span class="stat-label">done</span>
         </div>
         <div class="stat-item">
           <span class="stat-number">{{ store.tasks.length }}</span>
-          <span class="stat-label">total tasks</span>
+          <span class="stat-label">tasks</span>
         </div>
         <div class="stat-item">
           <span class="stat-number">{{ store.phases.length }}</span>
@@ -409,7 +409,8 @@
               <div class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
                 <div class="task-row" @click="openEditForm(taskId)">
                   <!-- Drag Handle -->
-                  <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
+                  <span v-if="auth.isUnlocked" class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
+                  <span v-else class="task-drag-handle placeholder" aria-hidden="true">⋮⋮</span>
 
                   <!-- Completion Checkbox -->
                   <label class="checkbox-container" :class="{ disabled: !auth.isUnlocked }" @click.stop>
@@ -495,7 +496,8 @@
               <div class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
                 <div class="task-row">
                   <!-- Drag Handle -->
-                  <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
+                  <span v-if="auth.isUnlocked" class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
+                  <span v-else class="task-drag-handle placeholder" aria-hidden="true">⋮⋮</span>
 
                   <label class="checkbox-container">
                     <input
@@ -1159,6 +1161,13 @@ function handlePhaseReorder() {
   justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
+}
+
+/* Desktop-specific progress bar alignment */
+@media (min-width: 601px) {
+  .progress-container {
+    justify-content: flex-end;
+  }
 }
 
 .progress-bar {
@@ -2223,6 +2232,13 @@ function handlePhaseReorder() {
   .task-name,
   .item-name,
   .dependency-name { color: #fff; }
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .task-manager {
+    padding: 1rem;
+  }
 }
 
 /* Mobile portrait tweaks */
