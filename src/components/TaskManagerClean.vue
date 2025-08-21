@@ -222,23 +222,49 @@
       <div class="modal" @click.stop>
         <div class="modal-header">
           <div>
-            <h3>Edit Dependencies</h3>
-            <p class="modal-subtitle">Select which tasks "{{ editingDependencies.name }}" depends on</p>
+            <h3>Dependencies</h3>
+            <p class="modal-subtitle">Select which tasks "<strong>{{ editingDependencies.name }}</strong>" depends on</p>
           </div>
         </div>
 
-        <div class="dependency-list">
-          <div v-for="task in availableTasksForDependencies" :key="task.id" class="dependency-item">
-            <label class="checkbox-container">
-              <input
-                type="checkbox"
-                :checked="editingDependencies.dependsOn && editingDependencies.dependsOn.includes(task.id)"
-                @change="toggleDependency(task.id, $event.target.checked)"
-              />
-              <span class="checkmark"></span>
-            </label>
-            <div class="dependency-info">
-              <span class="dependency-name">{{ task.name }}</span>
+        <div class="dependency-sections">
+          <!-- Selected Dependencies Section -->
+          <div v-if="selectedDependencies.length > 0" class="dependency-section">
+            <h4 class="dependency-section-title">Selected</h4>
+            <div class="dependency-list">
+              <div v-for="task in selectedDependencies" :key="task.id" class="dependency-item">
+                <label class="checkbox-container">
+                  <input
+                    type="checkbox"
+                    :checked="true"
+                    @change="toggleDependency(task.id, $event.target.checked)"
+                  />
+                  <span class="checkmark"></span>
+                </label>
+                <div class="dependency-info">
+                  <span class="dependency-name">{{ task.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Available Tasks Section -->
+          <div class="dependency-section">
+            <h4 class="dependency-section-title">Tasks</h4>
+            <div class="dependency-list">
+              <div v-for="task in unselectedDependencies" :key="task.id" class="dependency-item">
+                <label class="checkbox-container">
+                  <input
+                    type="checkbox"
+                    :checked="false"
+                    @change="toggleDependency(task.id, $event.target.checked)"
+                  />
+                  <span class="checkmark"></span>
+                </label>
+                <div class="dependency-info">
+                  <span class="dependency-name">{{ task.name }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -506,6 +532,19 @@ const progressPercent = computed(() => {
 const availableTasksForDependencies = computed(() => {
   if (!editingDependencies.value) return []
   return store.tasks.filter(task => task.id !== editingDependencies.value.id)
+})
+
+// Split tasks into selected and unselected dependencies
+const selectedDependencies = computed(() => {
+  if (!editingDependencies.value) return []
+  const selectedIds = editingDependencies.value.dependsOn || []
+  return availableTasksForDependencies.value.filter(task => selectedIds.includes(task.id))
+})
+
+const unselectedDependencies = computed(() => {
+  if (!editingDependencies.value) return []
+  const selectedIds = editingDependencies.value.dependsOn || []
+  return availableTasksForDependencies.value.filter(task => !selectedIds.includes(task.id))
 })
 
 // Map of task id -> task object for easy lookup
@@ -1121,10 +1160,29 @@ function handlePhaseReorder() {
   border-radius: 0 0 6px 6px;
 }
 
-.dependency-list {
-  max-height: 300px;
-  overflow-y: auto;
+.dependency-sections {
   margin: 1rem 0;
+}
+
+.dependency-section {
+  margin-bottom: 1.5rem;
+}
+
+.dependency-section:last-child {
+  margin-bottom: 0;
+}
+
+.dependency-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.dependency-list {
+  max-height: 250px;
+  overflow-y: auto;
   border: 1px solid #E5E5E5;
   border-radius: 8px;
   background: #FAFAFA;
