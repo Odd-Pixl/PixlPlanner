@@ -1657,7 +1657,21 @@ function handlePhaseReorder() {
   gap: 0.75rem;
 }
 
+/* Desktop: shift right to align with task content */
+@media (min-width: 601px) {
+  .phase-title {
+    padding-left: 1rem;
+  }
+}
+
 .phase-left { display: grid; grid-template-columns: 16px 20px; align-items: center; gap: 0.5rem; }
+
+/* Desktop: match task row spacing */
+@media (min-width: 601px) {
+  .phase-left {
+    gap: 1rem;
+  }
+}
 
 .phase-title-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
 .phase-right { display: flex; align-items: center; gap: 0.75rem; }
@@ -1707,6 +1721,13 @@ function handlePhaseReorder() {
 
 
 .task-row { display: grid; grid-template-columns: 16px 24px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 0.75rem 0.5rem; gap: 0.5rem; cursor: pointer; }
+
+/* Desktop: double spacing between drag/checkbox/content */
+@media (min-width: 601px) {
+  .task-row {
+    gap: 1rem;
+  }
+}
 
 .checkbox-container {
   position: relative;
@@ -2237,6 +2258,13 @@ function handlePhaseReorder() {
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
+}
+
+/* Desktop: adjust for wider spacing */
+@media (min-width: 601px) {
+  .phase-progress-ring {
+    left: -40px; /* shift further left to align with checkbox */
+  }
 }
 
 .ring-svg { width: 20px; height: 20px; display: block; }
