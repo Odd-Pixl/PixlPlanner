@@ -89,34 +89,120 @@
       </button>
     </div>
 
-    <!-- Add Task Form Modal -->
-    <div v-if="showAddForm" class="modal-overlay" @click="showAddForm = false">
-      <div class="modal" @click.stop>
-        <h3>New task</h3>
-        <form @submit.prevent="handleAddTask" class="task-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Name</label>
-              <input ref="newTaskNameInput" v-model="newTask.name" type="text" required />
+    <!-- Task Modal (Add/Edit) -->
+    <div v-if="showTaskModal" class="modal-overlay" @click="closeTaskModal">
+      <div class="modal task-modal" @click.stop>
+        <div class="modal-screens" :class="{ 'show-tags': showTagsScreen }">
+          <!-- Main Task Form Screen -->
+          <div class="modal-screen">
+            <h3>{{ modalTitle }}</h3>
+            <form @submit.prevent="handleTaskSubmit" class="task-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Name</label>
+                  <input ref="taskNameInput" v-model="currentTask.name" type="text" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <textarea v-model="currentTask.description" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <div class="tags-section">
+                  <div class="tags-header">
+                    <label>Tags</label>
+                    <button v-if="auth.isUnlocked" type="button" @click="openTagsScreen" class="btn btn-secondary btn-small">Edit</button>
+                  </div>
+                  <div v-if="currentTask.features && currentTask.features.length > 0" class="current-tags">
+                    <span class="feature-tag" v-for="featureId in currentTask.features" :key="featureId">
+                      {{ store.getFeatureById(featureId)?.name || featureId }}
+                    </span>
+                  </div>
+                  <div v-else class="no-tags">
+                    No tags
+                  </div>
+                </div>
+              </div>
+              <div class="form-group domain-group">
+                <label>Domain</label>
+                <select v-model="currentTask.domain">
+                  <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
+                    {{ domain.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="button" @click="closeTaskModal" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">{{ isEditingMode ? 'Save' : 'Add Task' }}</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tags Screen -->
+          <div class="modal-screen tags-screen">
+            <div class="modal-nav">
+              <button type="button" @click="closeTagsScreen" class="btn-icon" title="Back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <h3>Tags</h3>
+              <div class="nav-spacer"></div>
+            </div>
+            
+            <div class="tags-content">
+              <!-- Selected Tags Section -->
+              <div v-if="selectedTags.length > 0" class="tag-section">
+                <h4 class="tag-section-title">Selected</h4>
+                <div class="tag-list">
+                  <div v-for="tag in selectedTags" :key="tag.id" class="tag-item" :class="{ 'tag-unused': getTagUsageCount(tag.id) === 0 }">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
+                        :checked="true"
+                        @change="toggleTag(tag.id, $event.target.checked)"
+                      />
+                      <span class="checkmark"></span>
+                    </label>
+                    <div class="tag-info">
+                      <span class="tag-name">{{ tag.name }}</span>
+                    </div>
+                    <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Available Tags Section -->
+              <div class="tag-section">
+                <h4 class="tag-section-title">Tags</h4>
+                <div class="tag-list">
+                  <div v-for="tag in availableTags" :key="tag.id" class="tag-item" :class="{ 'tag-unused': getTagUsageCount(tag.id) === 0 }">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
+                        :checked="false"
+                        @change="toggleTag(tag.id, $event.target.checked)"
+                      />
+                      <span class="checkmark"></span>
+                    </label>
+                    <div class="tag-info">
+                      <span class="tag-name">{{ tag.name }}</span>
+                    </div>
+                    <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea v-model="newTask.description" rows="3"></textarea>
-          </div>
-          <div class="form-group domain-group">
-            <label>Domain</label>
-            <select v-model="newTask.domain">
-              <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                {{ domain.name }}
-              </option>
-            </select>
-          </div>
-          <div class="form-actions">
-            <button type="button" @click="showAddForm = false" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add Task</button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
 
@@ -321,8 +407,8 @@
             group="tasks"
           >
             <template #item="{ element: taskId }">
-              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed, editing: editingTask === taskId }">
-                <div class="task-row" @click="toggleEdit(taskId)">
+              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
+                <div class="task-row" @click="openEditForm(taskId)">
                   <!-- Drag Handle -->
                   <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
 
@@ -380,32 +466,6 @@
                   </div>
                 </div>
 
-                <!-- Inline Edit Form -->
-                <div v-if="editingTask === taskId" class="edit-form">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label>Task Name</label>
-                      <input
-                        v-model="tempTaskNames[taskId]"
-                        @blur="onNameBlur(taskId)"
-                        type="text"
-                      />
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label>Description</label>
-                    <textarea v-model="taskMap[taskId].description" rows="3"></textarea>
-                  </div>
-                  <div class="form-group domain-group">
-                    <label>Domain</label>
-                    <select v-model="taskMap[taskId].domain">
-                      <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                        {{ domain.name }}
-                      </option>
-                    </select>
-                  </div>
-
-                </div>
               </div>
             </template>
           </draggable>
@@ -433,7 +493,7 @@
             group="tasks"
           >
             <template #item="{ element: taskId }">
-              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed, editing: editingTask === taskId }">
+              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
                 <div class="task-row">
                   <!-- Drag Handle -->
                   <span class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
@@ -447,7 +507,7 @@
                     <span class="checkmark"></span>
                   </label>
 
-                  <div class="task-content" @click="toggleEdit(taskId)">
+                  <div class="task-content" @click="openEditForm(taskId)">
                     <div class="task-header">
                       <h3 class="task-name" :class="{ completed: taskMap[taskId]?.completed }">
                         {{ taskMap[taskId]?.name }}
@@ -496,7 +556,9 @@ const auth = useAuthStore()
 const isDev = import.meta.env.DEV
 
 // Local state
-const showAddForm = ref(false)
+const showTaskModal = ref(false)
+const editingTaskId = ref(null)
+const showTagsScreen = ref(false)
 const showPhaseForm = ref(false)
 const showAddPhaseForm = ref(false)
 const showDependencyForm = ref(false)
@@ -504,10 +566,7 @@ const showUnlockModal = ref(false)
 const unlockPassword = ref('')
 const unlockError = ref('')
 const unlockInputRef = ref(null)
-const newTaskNameInput = ref(null)
-const editingTask = ref(null)
-// Temp edits for task names keyed by task id so we only persist on blur
-const tempTaskNames = ref({})
+const taskNameInput = ref(null)
 const editingPhase = ref(null)
 const editingDependencies = ref(null)
 const newTask = ref({
@@ -524,6 +583,16 @@ const newPhase = ref({
 // Computed properties
 const completedTasks = computed(() => {
   return store.tasks.filter(task => task.completed).length
+})
+
+// Modal state
+const isEditingMode = computed(() => editingTaskId.value !== null)
+const modalTitle = computed(() => isEditingMode.value ? 'Edit task' : 'New task')
+const currentTask = computed(() => {
+  if (isEditingMode.value) {
+    return store.tasks.find(t => t.id === editingTaskId.value) || {}
+  }
+  return newTask.value
 })
 
 const progressPercent = computed(() => {
@@ -548,6 +617,17 @@ const unselectedDependencies = computed(() => {
   if (!editingDependencies.value) return []
   const selectedIds = editingDependencies.value.dependsOn || []
   return availableTasksForDependencies.value.filter(task => !selectedIds.includes(task.id))
+})
+
+// Tag management
+const selectedTags = computed(() => {
+  const selectedIds = currentTask.value.features || []
+  return store.features.filter(tag => selectedIds.includes(tag.id))
+})
+
+const availableTags = computed(() => {
+  const selectedIds = currentTask.value.features || []
+  return store.features.filter(tag => !selectedIds.includes(tag.id))
 })
 
 // Map of task id -> task object for easy lookup
@@ -621,16 +701,28 @@ function getPhaseProgressPercent(phaseId) {
 // (removed) phase-level toggle helpers
 
 // Methods
-function handleAddTask() {
-  if (newTask.value.name.trim()) {
-    store.addTask({ ...newTask.value })
-    newTask.value = {
-      name: '',
-      domain: 'runtime',
-      description: '',
-      features: []
+function handleTaskSubmit() {
+  if (currentTask.value.name.trim()) {
+    if (isEditingMode.value) {
+      // Update existing task
+      store.updateTask(editingTaskId.value, {
+        name: currentTask.value.name,
+        description: currentTask.value.description,
+        domain: currentTask.value.domain,
+        features: currentTask.value.features
+      })
+    } else {
+      // Add new task
+      store.addTask({ ...currentTask.value })
+      // Reset form for next time
+      newTask.value = {
+        name: '',
+        domain: 'runtime',
+        description: '',
+        features: []
+      }
     }
-    showAddForm.value = false
+    closeTaskModal()
   }
 }
 
@@ -640,23 +732,6 @@ function handleRemoveTask(taskId) {
   }
 }
 
-function toggleEdit(taskId) {
-  if (!auth.isUnlocked) return
-  // Initialize temp name when opening editor
-  if (editingTask.value !== taskId) {
-    const currentName = taskMap.value[taskId]?.name || ''
-    tempTaskNames.value[taskId] = currentName
-  }
-  editingTask.value = editingTask.value === taskId ? null : taskId
-}
-
-function onNameBlur(taskId) {
-  const newName = (tempTaskNames.value && tempTaskNames.value[taskId] != null) ? tempTaskNames.value[taskId] : ''
-  const currentName = taskMap.value[taskId]?.name || ''
-  if (newName !== currentName) {
-    store.updateTask(taskId, { name: newName })
-  }
-}
 
 function togglePhaseEdit(phaseId) {
   editingPhase.value = editingPhase.value === phaseId ? null : phaseId
@@ -690,13 +765,102 @@ function closeUnlockModal() {
 }
 
 function openAddForm() {
-  showAddForm.value = true
+  editingTaskId.value = null
+  // Reset new task form
+  newTask.value = {
+    name: '',
+    domain: 'runtime',
+    description: '',
+    features: []
+  }
+  showTaskModal.value = true
   nextTick(() => {
-    if (newTaskNameInput.value) {
-      newTaskNameInput.value.focus()
-      newTaskNameInput.value.select?.()
+    if (taskNameInput.value) {
+      taskNameInput.value.focus()
+      taskNameInput.value.select?.()
     }
   })
+}
+
+function openEditForm(taskId) {
+  if (!auth.isUnlocked) return
+  editingTaskId.value = taskId
+  showTaskModal.value = true
+  nextTick(() => {
+    if (taskNameInput.value) {
+      taskNameInput.value.focus()
+      taskNameInput.value.select?.()
+    }
+  })
+}
+
+function closeTaskModal() {
+  showTaskModal.value = false
+  editingTaskId.value = null
+  showTagsScreen.value = false
+}
+
+function openTagsScreen() {
+  showTagsScreen.value = true
+}
+
+function closeTagsScreen() {
+  showTagsScreen.value = false
+}
+
+function toggleTag(tagId, isChecked) {
+  const currentFeatures = currentTask.value.features || []
+  let newFeatures
+  
+  if (isChecked) {
+    newFeatures = [...currentFeatures, tagId]
+  } else {
+    newFeatures = currentFeatures.filter(id => id !== tagId)
+  }
+  
+  // Update the current task's features
+  if (isEditingMode.value) {
+    // Update the actual task in the store
+    store.updateTask(editingTaskId.value, { features: newFeatures })
+  } else {
+    // Update the new task form
+    newTask.value.features = newFeatures
+  }
+}
+
+function getTagUsageCount(tagId) {
+  return store.tasks.filter(task => 
+    task.features && task.features.includes(tagId)
+  ).length
+}
+
+function handleDeleteTag(tag) {
+  const usageCount = getTagUsageCount(tag.id)
+  
+  // If tag is unused, delete without confirmation
+  if (usageCount === 0) {
+    // Remove the tag from the features list
+    const updatedFeatures = store.features.filter(f => f.id !== tag.id)
+    store.features.splice(0, store.features.length, ...updatedFeatures)
+    return
+  }
+  
+  // If tag is used, show confirmation with usage count
+  const message = `Are you sure you want to delete the tag "${tag.name}"? This tag is currently used by ${usageCount} task${usageCount === 1 ? '' : 's'}.`
+  
+  if (confirm(message)) {
+    // Remove the tag from all tasks that use it
+    store.tasks.forEach(task => {
+      if (task.features && task.features.includes(tag.id)) {
+        const updatedFeatures = task.features.filter(id => id !== tag.id)
+        store.updateTask(task.id, { features: updatedFeatures })
+      }
+    })
+    
+    // Remove the tag from the features list
+    const updatedFeatures = store.features.filter(f => f.id !== tag.id)
+    store.features.splice(0, store.features.length, ...updatedFeatures)
+  }
 }
 
 function attemptUnlock() {
@@ -724,11 +888,16 @@ function handleGlobalKey(e) {
     }
   }
   if (e.key === 'Escape') {
-    if (showAddForm.value) showAddForm.value = false
-    if (showPhaseForm.value) showPhaseForm.value = false
-    if (showAddPhaseForm.value) showAddPhaseForm.value = false
-    if (showDependencyForm.value) showDependencyForm.value = false
-    if (showUnlockModal.value) showUnlockModal.value = false
+    if (showTaskModal.value) {
+      if (showTagsScreen.value) {
+        closeTagsScreen()
+      } else {
+        closeTaskModal()
+      }
+    } else if (showPhaseForm.value) showPhaseForm.value = false
+    else if (showAddPhaseForm.value) showAddPhaseForm.value = false
+    else if (showDependencyForm.value) showDependencyForm.value = false
+    else if (showUnlockModal.value) showUnlockModal.value = false
   }
 }
 
@@ -1526,6 +1695,190 @@ function handlePhaseReorder() {
 .task-form .form-actions {
   margin-top: 1.5rem;
   margin-bottom: 0;
+}
+
+/* Task Modal with Navigation */
+.task-modal {
+  overflow: hidden;
+  position: relative;
+}
+
+.modal-screens {
+  display: flex;
+  width: 200%;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+.modal-screens.show-tags {
+  transform: translateX(-50%);
+}
+
+.modal-screen {
+  flex: 0 0 50%;
+  width: 50%;
+  position: relative;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.modal-screens:not(.show-tags) .modal-screen:first-child {
+  opacity: 1;
+}
+
+.modal-screens:not(.show-tags) .modal-screen:last-child {
+  opacity: 0;
+}
+
+.modal-screens.show-tags .modal-screen:first-child {
+  opacity: 0;
+}
+
+.modal-screens.show-tags .modal-screen:last-child {
+  opacity: 1;
+}
+
+/* Tags Section in Main Form */
+.tags-section {
+  margin-bottom: 0;
+}
+
+.tags-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.tags-header label {
+  margin-bottom: 0;
+}
+
+.current-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 1.5rem;
+  align-items: center;
+}
+
+.no-tags {
+  color: #999;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  font-style: italic;
+}
+
+/* Tags Screen */
+.tags-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.modal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #E5E5E5;
+  margin-bottom: 1.5rem;
+}
+
+.modal-nav h3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+
+.nav-spacer {
+  width: 48px;
+  height: 48px;
+}
+
+.tags-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tag-section {
+  margin-bottom: 1.5rem;
+}
+
+.tag-section:last-child {
+  margin-bottom: 0;
+}
+
+.tag-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.tag-list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  background: #FAFAFA;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  gap: 0.75rem;
+  border-bottom: 1px solid #E5E5E5;
+  transition: background 0.2s;
+}
+
+.tag-item .btn-icon {
+  margin-left: auto;
+}
+
+.tag-item:last-child {
+  border-bottom: none;
+}
+
+.tag-item:hover {
+  background: #F0F0F0;
+}
+
+.tag-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tag-name {
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+
+.tag-unused {
+  opacity: 0.6;
+}
+
+.tag-unused .tag-name {
+  color: #999;
+}
+
+.btn-secondary {
+  color: #666;
+}
+
+.btn-secondary:hover {
+  background: #F0F0F0;
+  color: #333;
 }
 
 .drag-handle {
