@@ -221,8 +221,10 @@
     <div v-if="showDependencyForm && editingDependencies" class="modal-overlay" @click="showDependencyForm = false">
       <div class="modal" @click.stop>
         <div class="modal-header">
-          <h3>Edit Dependencies</h3>
-          <p class="modal-subtitle">Select which tasks "{{ editingDependencies.name }}" depends on</p>
+          <div>
+            <h3>Edit Dependencies</h3>
+            <p class="modal-subtitle">Select which tasks "{{ editingDependencies.name }}" depends on</p>
+          </div>
         </div>
 
         <div class="dependency-list">
@@ -237,9 +239,6 @@
             </label>
             <div class="dependency-info">
               <span class="dependency-name">{{ task.name }}</span>
-              <span class="domain-badge" :class="`domain-${task.domain}`">
-                {{ store.getDomainById(task.domain)?.name || task.domain }}
-              </span>
             </div>
           </div>
         </div>
@@ -330,12 +329,6 @@
                         {{ store.getFeatureById(featureId)?.name || featureId }}
                       </span>
                     </div>
-                    <div v-if="taskMap[taskId]?.dependsOn && taskMap[taskId]?.dependsOn.length > 0" class="task-dependencies">
-                      <span class="dependencies-label">Depends on:</span>
-                      <span class="dependency" v-for="depId in taskMap[taskId]?.dependsOn" :key="depId">
-                        {{ store.tasks.find(t => t.id === depId)?.name || depId }}
-                      </span>
-                    </div>
                     <!-- Mobile-only meta stacked under tags/dependencies -->
                     <div class="task-meta-mobile mobile-only">
                       <span class="domain-badge" :class="`domain-${taskMap[taskId]?.domain}`">
@@ -346,13 +339,7 @@
 
                   <!-- Task Actions -->
                   <div v-if="auth.isUnlocked" class="task-actions" @click.stop>
-                    <button v-if="auth.isUnlocked" @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button v-if="auth.isUnlocked" @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" title="Edit Dependencies">
+                    <button v-if="auth.isUnlocked" @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" :class="{ 'btn-accent': taskMap[taskId]?.dependsOn && taskMap[taskId]?.dependsOn.length > 0 }" title="Edit Dependencies">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                       </svg>
@@ -370,7 +357,11 @@
                   <div class="form-row">
                     <div class="form-group">
                       <label>Task Name</label>
-                      <input v-model="taskMap[taskId].name" type="text" />
+                      <input
+                        v-model="tempTaskNames[taskId]"
+                        @blur="onNameBlur(taskId)"
+                        type="text"
+                      />
                     </div>
                   </div>
                   <div class="form-group">
@@ -445,13 +436,7 @@
                   </div>
 
                   <div v-if="auth.isUnlocked" class="task-actions">
-                    <button @click="toggleEdit(taskId)" class="btn-icon" title="Edit">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" title="Edit Dependencies">
+                    <button @click="editTaskDependencies(taskMap[taskId])" class="btn-icon" :class="{ 'btn-accent': taskMap[taskId]?.dependsOn && taskMap[taskId]?.dependsOn.length > 0 }" title="Edit Dependencies">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                       </svg>
@@ -492,6 +477,8 @@ const unlockPassword = ref('')
 const unlockError = ref('')
 const unlockInputRef = ref(null)
 const editingTask = ref(null)
+// Temp edits for task names keyed by task id so we only persist on blur
+const tempTaskNames = ref({})
 const editingPhase = ref(null)
 const editingDependencies = ref(null)
 const newTask = ref({
@@ -613,7 +600,20 @@ function handleRemoveTask(taskId) {
 
 function toggleEdit(taskId) {
   if (!auth.isUnlocked) return
+  // Initialize temp name when opening editor
+  if (editingTask.value !== taskId) {
+    const currentName = taskMap.value[taskId]?.name || ''
+    tempTaskNames.value[taskId] = currentName
+  }
   editingTask.value = editingTask.value === taskId ? null : taskId
+}
+
+function onNameBlur(taskId) {
+  const newName = (tempTaskNames.value && tempTaskNames.value[taskId] != null) ? tempTaskNames.value[taskId] : ''
+  const currentName = taskMap.value[taskId]?.name || ''
+  if (newName !== currentName) {
+    store.updateTask(taskId, { name: newName })
+  }
 }
 
 function togglePhaseEdit(phaseId) {
@@ -1020,12 +1020,13 @@ function handlePhaseReorder() {
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1.5rem;
 }
 
 .modal-header h3 {
   margin: 0;
+  line-height: 1.3;
 }
 
 .modal-subtitle {
@@ -1033,6 +1034,7 @@ function handlePhaseReorder() {
   color: #666;
   font-size: 0.9rem;
   font-weight: normal;
+  line-height: 1.5;
 }
 
 .error-text {
@@ -1155,6 +1157,7 @@ function handlePhaseReorder() {
 .dependency-name {
   font-weight: 500;
   color: #1a1a1a;
+  line-height: 1.3;
 }
 
 .phases-container {
@@ -1236,8 +1239,7 @@ function handlePhaseReorder() {
   color: #999;
 }
 
-.task-row { display: grid; grid-template-columns: 16px 24px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 1rem 0.5rem; gap: 0.5rem; }
-.task-row { cursor: pointer; }
+.task-row { display: grid; grid-template-columns: 16px 24px 1fr auto; align-items: flex-start; padding: 1rem 0.5rem 0.75rem 0.5rem; gap: 0.5rem; cursor: pointer; }
 
 .checkbox-container {
   position: relative;
@@ -1363,26 +1365,6 @@ function handlePhaseReorder() {
   border: 1px solid #E9ECEF;
 }
 
-.task-dependencies {
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.dependencies-label {
-  font-weight: 500;
-  margin-right: 0.5rem;
-}
-
-.dependency {
-  display: inline-block;
-  background: #F8F8F8;
-  color: #666;
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  margin-right: 0.4rem;
-  margin-bottom: 0.2rem;
-  font-size: 0.75rem;
-}
 
 .task-actions {
   display: flex;
@@ -1427,11 +1409,20 @@ function handlePhaseReorder() {
   color: #CC0000;
 }
 
+.btn-accent {
+  color: #007AFF;
+}
+
+.btn-accent:hover {
+  background: #F0F0F0;
+  color: #0056CC;
+}
+
 .edit-form {
   padding: 1rem 2rem;
   background: #FAFAFA;
   border-top: 1px solid #E5E5E5;
-  margin: -1rem -0.25rem 0 -0.25rem;
+  margin: 0 -0.25rem 0 -0.25rem;
 }
 
 /* Make title input span full width like description in edit form */
@@ -1593,13 +1584,11 @@ function handlePhaseReorder() {
   .task-header .task-meta { display: none; }
   .task-meta-mobile { display: block; }
   .task-features { justify-content: flex-start; }
-  .task-features, .task-meta-mobile, .task-dependencies { margin-left: 0; }
-  .task-meta-mobile { margin-top: 0.25rem; }
+  .task-features, .task-meta-mobile { margin-left: 0; }
+  .task-meta-mobile { margin-top: 0.25rem; margin-bottom: 0.5rem; }
   .task-content { width: 100%; }
-  /* Hide dependencies entirely on mobile */
-  .task-dependencies { display: none !important; }
 }
 
 /* Constrain only the Domain field on larger screens */
-.edit-form .domain-group { max-width: 320px; }
+.edit-form .domain-group { max-width: 320px; margin-bottom: 0.5rem; }
 </style>
