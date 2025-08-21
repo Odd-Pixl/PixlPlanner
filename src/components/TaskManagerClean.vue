@@ -95,7 +95,7 @@
     <!-- Task Modal (Add/Edit) -->
     <div v-if="showTaskModal" class="modal-overlay" @click="cancelTaskModal">
       <div class="modal task-modal" @click.stop>
-        <div class="modal-screens" :class="{ 'show-tags': showTagsScreen }">
+        <div class="modal-screens" :class="{ 'show-tags': showTagsScreen, 'show-dependencies': showDependenciesScreen }">
           <!-- Main Task Form Screen -->
           <div class="modal-screen">
             <!-- Top Toolbar -->
@@ -137,6 +137,22 @@
                     </div>
                     <div v-else class="no-tags">
                       No tags
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="dependencies-section">
+                    <div class="dependencies-header">
+                      <label>Dependencies</label>
+                      <button v-if="auth.isUnlocked" type="button" @click="openDependenciesScreen" class="btn btn-secondary btn-mini">Edit</button>
+                    </div>
+                    <div v-if="currentTask.dependsOn && currentTask.dependsOn.length > 0" class="current-dependencies">
+                      <span class="dependency-pill" v-for="dependencyId in currentTask.dependsOn" :key="dependencyId">
+                        {{ store.tasks.find(t => t.id === dependencyId)?.name || dependencyId }}
+                      </span>
+                    </div>
+                    <div v-else class="no-dependencies">
+                      No dependencies
                     </div>
                   </div>
                 </div>
@@ -196,6 +212,72 @@
               <div class="toolbar-spacer"></div>
               <div class="toolbar-spacer"></div>
               <button @click="closeTagsScreen" class="btn btn-primary">Done</button>
+            </div>
+          </div>
+
+          <!-- Dependencies Screen -->
+          <div class="modal-screen dependencies-screen">
+            <!-- Top Toolbar -->
+            <div class="modal-toolbar modal-toolbar-top">
+              <button type="button" @click="closeDependenciesScreen" class="btn btn-secondary btn-icon-only toolbar-back-button" title="Back">
+                <span class="back-arrow">←</span>
+              </button>
+              <h3 class="toolbar-title">Dependencies</h3>
+              <div class="toolbar-spacer"></div>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="modal-content dependencies-content">
+              <p class="modal-subtitle">Select which tasks "<strong>{{ currentTask.name }}</strong>" depends on</p>
+
+              <div class="dependency-sections">
+                <!-- Selected Dependencies Section -->
+                <div v-if="selectedDependencies.length > 0" class="dependency-section">
+                  <h4 class="dependency-section-title">Selected</h4>
+                  <div class="dependency-list">
+                    <div v-for="task in selectedDependencies" :key="task.id" class="dependency-item">
+                      <label class="checkbox-container">
+                        <input
+                          type="checkbox"
+                          :checked="true"
+                          @change="toggleDependency(task.id, $event.target.checked)"
+                        />
+                        <span class="checkmark"></span>
+                      </label>
+                      <div class="dependency-info">
+                        <span class="dependency-name">{{ task.name }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Available Tasks Section -->
+                <div class="dependency-section">
+                  <h4 class="dependency-section-title">Tasks</h4>
+                  <div class="dependency-list">
+                    <div v-for="task in unselectedDependencies" :key="task.id" class="dependency-item">
+                      <label class="checkbox-container">
+                        <input
+                          type="checkbox"
+                          :checked="false"
+                          @change="toggleDependency(task.id, $event.target.checked)"
+                        />
+                        <span class="checkmark"></span>
+                      </label>
+                      <div class="dependency-info">
+                        <span class="dependency-name">{{ task.name }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Bottom Toolbar -->
+            <div class="modal-toolbar modal-toolbar-bottom">
+              <div class="toolbar-spacer"></div>
+              <div class="toolbar-spacer"></div>
+              <button @click="closeDependenciesScreen" class="btn btn-primary">Done</button>
             </div>
           </div>
         </div>
@@ -582,6 +664,7 @@ const isDev = import.meta.env.DEV
 const showTaskModal = ref(false)
 const editingTaskId = ref(null)
 const showTagsScreen = ref(false)
+const showDependenciesScreen = ref(false)
 const showPhaseForm = ref(false)
 const showAddPhaseForm = ref(false)
 const showDependencyForm = ref(false)
@@ -596,13 +679,15 @@ const newTask = ref({
   name: '',
   domain: 'runtime',
   description: '',
-  features: []
+  features: [],
+  dependsOn: []
 })
 const editingTask = ref({
   name: '',
   domain: 'runtime',
   description: '',
-  features: []
+  features: [],
+  dependsOn: []
 })
 const newPhase = ref({
   name: '',
@@ -738,7 +823,8 @@ function handleTaskSubmit() {
         name: editingTask.value.name,
         description: editingTask.value.description,
         domain: editingTask.value.domain,
-        features: editingTask.value.features
+        features: editingTask.value.features,
+        dependsOn: editingTask.value.dependsOn
       })
     } else {
       // Add new task
@@ -748,7 +834,8 @@ function handleTaskSubmit() {
         name: '',
         domain: 'runtime',
         description: '',
-        features: []
+        features: [],
+        dependsOn: []
       }
     }
     closeTaskModal()
@@ -820,7 +907,8 @@ function openAddForm() {
     name: '',
     domain: 'runtime',
     description: '',
-    features: []
+    features: [],
+    dependsOn: []
   }
   showTaskModal.value = true
   // Prevent body scrolling on all devices
@@ -847,7 +935,8 @@ function openEditForm(taskId) {
       name: originalTask.name,
       domain: originalTask.domain,
       description: originalTask.description || '',
-      features: [...(originalTask.features || [])]
+      features: [...(originalTask.features || [])],
+      dependsOn: [...(originalTask.dependsOn || [])]
     }
   }
   
@@ -869,6 +958,7 @@ function closeTaskModal() {
   showTaskModal.value = false
   editingTaskId.value = null
   showTagsScreen.value = false
+  showDependenciesScreen.value = false
   // Restore body scrolling
   preventBodyScroll(false)
 }
@@ -883,7 +973,8 @@ function cancelTaskModal() {
       name: '',
       domain: 'runtime',
       description: '',
-      features: []
+      features: [],
+      dependsOn: []
     }
   }
   closeTaskModal()
@@ -895,6 +986,14 @@ function openTagsScreen() {
 
 function closeTagsScreen() {
   showTagsScreen.value = false
+}
+
+function openDependenciesScreen() {
+  showDependenciesScreen.value = true
+}
+
+function closeDependenciesScreen() {
+  showDependenciesScreen.value = false
 }
 
 function toggleTag(tagId, isChecked) {
@@ -1419,8 +1518,14 @@ function handlePhaseReorder() {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
+  color: #666;
   font-size: 0.9rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .form-group label {
+    color: #ccc;
+  }
 }
 
 .form-group input,
@@ -1519,7 +1624,7 @@ function handlePhaseReorder() {
 
 .modal-subtitle {
   margin: 0.5rem 0 0 0;
-  color: #666;
+  color: #999;
   font-size: 0.9rem;
   font-weight: normal;
   line-height: 1.5;
@@ -1632,6 +1737,12 @@ function handlePhaseReorder() {
   line-height: 1.3;
 }
 
+@media (prefers-color-scheme: dark) {
+  .dependency-section-title {
+    color: #fff;
+  }
+}
+
 .dependency-list {
   max-height: 250px;
   overflow-y: scroll;
@@ -1648,7 +1759,7 @@ function handlePhaseReorder() {
   align-items: center;
   padding: 0.75rem;
   gap: 0.75rem;
-  border-bottom: 1px solid #E5E5E5;
+  border-bottom: 1px solid light-dark(#E5E5E5, #404040);
   transition: background 0.2s;
 }
 
@@ -1671,6 +1782,12 @@ function handlePhaseReorder() {
   font-weight: 500;
   color: #1a1a1a;
   line-height: 1.3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dependency-name {
+    color: #fff;
+  }
 }
 
 .phases-container {
@@ -1737,6 +1854,12 @@ function handlePhaseReorder() {
   font-size: 0.9rem;
   color: #666;
   font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  .phase-progress {
+    color: #ccc;
+  }
 }
 
 .task-list {
@@ -1875,6 +1998,12 @@ function handlePhaseReorder() {
   font-size: 0.95rem;
 }
 
+@media (prefers-color-scheme: dark) {
+  .task-description {
+    color: #ccc;
+  }
+}
+
 .task-features {
   display: flex;
   flex-wrap: wrap;
@@ -1974,7 +2103,7 @@ function handlePhaseReorder() {
   margin-bottom: 0;
 }
 
-/* Task Modal with Navigation */
+/* Task Modal with Navigation - Updated to support 3 screens */
 .task-modal {
   overflow: hidden;
   position: relative;
@@ -1982,7 +2111,7 @@ function handlePhaseReorder() {
 
 .modal-screens {
   display: flex;
-  width: 200%;
+  width: 300%; /* Changed to support 3 screens */
   height: 100%;
   transform: translateX(0);
   transition: transform 0.3s ease;
@@ -1990,32 +2119,54 @@ function handlePhaseReorder() {
   min-height: 0;
 }
 
+/* Show tags screen (middle screen) */
 .modal-screens.show-tags {
-  transform: translateX(-50%);
+  transform: translateX(-33.333%);
+}
+
+/* Show dependencies screen (last screen) */
+.modal-screens.show-dependencies {
+  transform: translateX(-66.666%);
 }
 
 .modal-screen {
-  flex: 0 0 50%;
-  width: 50%;
+  flex: 0 0 33.333%; /* Changed to support 3 screens */
+  width: 33.333%;
   position: relative;
   opacity: 1;
   transition: opacity 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.modal-screens:not(.show-tags) .modal-screen:first-child {
+/* Main screen visibility */
+.modal-screens:not(.show-tags):not(.show-dependencies) .modal-screen:nth-child(1) {
   opacity: 1;
 }
-
-.modal-screens:not(.show-tags) .modal-screen:last-child {
+.modal-screens:not(.show-tags):not(.show-dependencies) .modal-screen:nth-child(2),
+.modal-screens:not(.show-tags):not(.show-dependencies) .modal-screen:nth-child(3) {
   opacity: 0;
 }
 
-.modal-screens.show-tags .modal-screen:first-child {
+/* Tags screen visibility */
+.modal-screens.show-tags .modal-screen:nth-child(2) {
+  opacity: 1;
+}
+.modal-screens.show-tags .modal-screen:nth-child(1),
+.modal-screens.show-tags .modal-screen:nth-child(3) {
   opacity: 0;
 }
 
-.modal-screens.show-tags .modal-screen:last-child {
+/* Dependencies screen visibility */
+.modal-screens.show-dependencies .modal-screen:nth-child(3) {
   opacity: 1;
+}
+.modal-screens.show-dependencies .modal-screen:nth-child(1),
+.modal-screens.show-dependencies .modal-screen:nth-child(2) {
+  opacity: 0;
 }
 
 /* Tags Section in Main Form */
@@ -2030,9 +2181,16 @@ function handlePhaseReorder() {
   margin-bottom: 0.75rem;
  }
  
- .tags-header label {
+.tags-header label {
   margin-bottom: 0;
- }
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tags-header label {
+    color: #ccc;
+  }
+}
  
  /* Ensure the inline Edit button in the tags header uses secondary grey text */
  .tags-header .btn.btn-secondary {
@@ -2044,6 +2202,66 @@ function handlePhaseReorder() {
     color: #ccc;
   }
  }
+
+/* Dependencies Section in Main Form - styled the same as tags */
+.dependencies-section {
+  margin-bottom: 0;
+}
+
+.dependencies-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.dependencies-header label {
+  margin-bottom: 0;
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dependencies-header label {
+    color: #ccc;
+  }
+}
+
+/* Ensure the inline Edit button in the dependencies header uses secondary grey text */
+.dependencies-header .btn.btn-secondary {
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dependencies-header .btn.btn-secondary {
+    color: #ccc;
+  }
+}
+
+.current-dependencies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 1.5rem;
+  align-items: center;
+}
+
+.dependency-pill {
+  background: light-dark(#f0f0f0, #1a1a1a);
+  color: light-dark(#1a1a1a, #fff);
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+}
+
+.no-dependencies {
+  color: #999;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  font-style: italic;
+}
 
 .current-tags {
   display: flex;
@@ -2071,19 +2289,6 @@ function handlePhaseReorder() {
   font-style: italic;
 }
 
-/* Modal Screens Structure */
-.modal-screen {
-  flex: 0 0 50%;
-  width: 50%;
-  position: relative;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
 
 /* iOS-Style Modal Toolbars */
 .modal-toolbar {
@@ -2256,6 +2461,21 @@ function handlePhaseReorder() {
 /* Mobile: match main page padding */
 @media (max-width: 600px) {
   .tags-content {
+    padding: 1.25rem 0;
+  }
+}
+
+/* Dependencies content should have consistent vertical padding like tags */
+.dependencies-content {
+  padding: 1.5rem 0;
+  height: auto;
+  min-height: auto;
+  max-height: none;
+}
+
+/* Mobile: match main page padding */
+@media (max-width: 600px) {
+  .dependencies-content {
     padding: 1.25rem 0;
   }
 }
