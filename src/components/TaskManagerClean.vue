@@ -2039,8 +2039,8 @@ function handlePhaseReorder() {
 
 .tag-pill {
   background: light-dark(#f0f0f0, #1a1a1a);
-  color: light-dark(#666, #ccc);
-  padding: 0.25rem 0.5rem;
+  color: light-dark(#1a1a1a, #fff);
+  padding: 0.375rem 0.75rem;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 400;
@@ -2076,8 +2076,8 @@ function handlePhaseReorder() {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
-  /* border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a); */
-  /* background: light-dark(#f5f5f5, #1a1a1a); */
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  background: light-dark(#f5f5f5, #1a1a1a);
 }
 
 /* Mobile: safe area container for modals */
