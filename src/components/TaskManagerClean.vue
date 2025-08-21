@@ -111,10 +111,10 @@
                 <div class="tags-section">
                   <div class="tags-header">
                     <label>Tags</label>
-                    <button v-if="auth.isUnlocked" type="button" @click="openTagsScreen" class="btn btn-secondary btn-small">Edit</button>
+                    <button v-if="auth.isUnlocked" type="button" @click="openTagsScreen" class="btn btn-secondary btn-mini">Edit</button>
                   </div>
                   <div v-if="currentTask.features && currentTask.features.length > 0" class="current-tags">
-                    <span class="feature-tag" v-for="featureId in currentTask.features" :key="featureId">
+                    <span class="tag-pill" v-for="featureId in currentTask.features" :key="featureId">
                       {{ store.getFeatureById(featureId)?.name || featureId }}
                     </span>
                   </div>
@@ -141,10 +141,8 @@
           <!-- Tags Screen -->
           <div class="modal-screen tags-screen">
             <div class="modal-nav">
-              <button type="button" @click="closeTagsScreen" class="btn-icon" title="Back">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
+              <button type="button" @click="closeTagsScreen" class="btn btn-secondary btn-icon-only back-button" title="Back">
+                <span class="back-arrow">←</span>
               </button>
               <h3>Tags</h3>
               <div class="nav-spacer"></div>
@@ -1122,6 +1120,11 @@ function handlePhaseReorder() {
   font-size: 0.9rem;
 }
 
+.btn-mini {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+}
+
 .btn-icon-only {
   padding: 0.75rem;
   min-width: 48px;
@@ -1762,6 +1765,18 @@ function handlePhaseReorder() {
   align-items: center;
 }
 
+.tag-pill {
+  background: #F8F9FA;
+  color: #495057;
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #E9ECEF;
+  display: inline-flex;
+  align-items: center;
+}
+
 .no-tags {
   color: #999;
   font-size: 0.9rem;
@@ -1799,6 +1814,26 @@ function handlePhaseReorder() {
 .nav-spacer {
   width: 48px;
   height: 48px;
+}
+
+.modal-nav .back-button {
+  color: #333 !important;
+}
+
+.modal-nav .back-button:hover {
+  color: #333 !important;
+  background: #E5E5E5;
+}
+
+.modal-nav .back-button .back-arrow {
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+  color: #333;
+}
+
+.modal-nav .back-button:hover .back-arrow {
+  color: #333;
 }
 
 .tags-content {
