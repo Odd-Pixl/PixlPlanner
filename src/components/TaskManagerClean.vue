@@ -242,75 +242,80 @@
         </div>
         
         <!-- Scrollable Content -->
-        <div class="modal-content">
-          <!-- Add Phase Form -->
-          <div v-if="showAddPhaseForm" class="add-phase-form">
-            <div class="form-row">
-              <input v-model="newPhase.name" type="text" placeholder="Phase name" class="phase-name-input" />
-              <input v-model="newPhase.goal" type="text" placeholder="Goal or milestone" class="phase-goal-input" />
-              <button @click="handleAddPhase" class="btn btn-primary btn-small">Add</button>
-              <button @click="showAddPhaseForm = false" class="btn btn-secondary btn-small">Cancel</button>
+        <div class="modal-content phases-content">
+          <!-- Phases Section -->
+          <div class="phases-section">
+            <!-- Add Phase Form -->
+            <div v-if="showAddPhaseForm" class="add-phase-form">
+              <div class="form-group">
+                <label>Phase Name</label>
+                <input v-model="newPhase.name" type="text" placeholder="Phase name" />
+              </div>
+              <div class="form-group">
+                <label>Goal</label>
+                <input v-model="newPhase.goal" type="text" placeholder="Goal or milestone" />
+              </div>
+              <div class="form-actions">
+                <button @click="showAddPhaseForm = false" class="btn btn-secondary btn-small">Cancel</button>
+                <button @click="handleAddPhase" class="btn btn-primary btn-small">Add</button>
+              </div>
             </div>
-          </div>
-
-          <!-- Compact Phase List -->
-          <div class="phase-list-compact">
-            <draggable
-              v-model="store.phases"
-              item-key="id"
-              handle=".drag-handle"
-              @end="handlePhaseReorder"
-              animation="150"
-              :disabled="!auth.isUnlocked"
-              class="phase-draggable-list"
-            >
-              <template #item="{ element: phase }">
-                <div class="phase-item-compact" :class="{ editing: editingPhase === phase.id }">
-                  <!-- Compact Phase Row -->
-                  <div class="phase-row" @click="togglePhaseEdit(phase.id)">
-                    <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-                    <div class="phase-info-compact">
-                      <span class="phase-name-compact">{{ phase.name }}</span>
-                      <span class="phase-goal-compact">{{ phase.goal }}</span>
-                      <span class="task-count-compact">{{ (phase.tasks || []).length }} tasks</span>
-                    </div>
-                    <div class="phase-actions">
-                      <button v-if="auth.isUnlocked" @click.stop="togglePhaseEdit(phase.id)" class="btn-icon btn-small" title="Edit">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </button>
-                      <button v-if="auth.isUnlocked" @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger btn-small" title="Delete">
+            
+            <!-- Phases List -->
+            <div class="phases-list">
+              <draggable
+                v-model="store.phases"
+                item-key="id"
+                handle=".drag-handle"
+                @end="handlePhaseReorder"
+                animation="150"
+                :disabled="!auth.isUnlocked"
+                class="phase-draggable-list"
+              >
+                <template #item="{ element: phase }">
+                  <div class="phase-item" :class="{ 'editing': editingPhase === phase.id }">
+                    <!-- Phase Row -->
+                    <div class="phase-row">
+                      <span v-if="auth.isUnlocked" class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                      <span v-else class="drag-handle-placeholder"></span>
+                      
+                      <div class="item-content" @click="auth.isUnlocked && togglePhaseEdit(phase.id)">
+                        <span class="item-name">{{ phase.name }}</span>
+                      </div>
+                      
+                      <button v-if="auth.isUnlocked" @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger" title="Delete Phase">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
                       </button>
                     </div>
-                  </div>
 
-                  <!-- Inline Edit Form -->
-                  <div v-if="editingPhase === phase.id" class="phase-edit-form">
-                    <div class="form-group">
-                      <label>Phase Name</label>
-                      <input v-model="phase.name" type="text" />
-                    </div>
-                    <div class="form-group">
-                      <label>Goal</label>
-                      <input v-model="phase.goal" type="text" />
-                    </div>
-                    <div class="form-actions">
-                      <button @click="editingPhase = null" class="btn btn-secondary btn-small">Done</button>
+                    <!-- Inline Edit Form -->
+                    <div v-if="editingPhase === phase.id" class="phase-edit-form">
+                      <div class="form-group">
+                        <label>Phase Name</label>
+                        <input v-model="phase.name" type="text" />
+                      </div>
+                      <div class="form-group">
+                        <label>Goal</label>
+                        <input v-model="phase.goal" type="text" />
+                      </div>
+                      <div class="form-actions">
+                        <button @click="editingPhase = null" class="btn btn-secondary btn-small">Done</button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </template>
-            </draggable>
+                </template>
+              </draggable>
+            </div>
           </div>
-
-          <div class="form-actions">
-            <button @click="closePhaseForm" class="btn btn-secondary">Close</button>
-          </div>
+        </div>
+        
+        <!-- Bottom Toolbar -->
+        <div class="modal-toolbar modal-toolbar-bottom">
+          <div class="toolbar-spacer"></div>
+          <div class="toolbar-spacer"></div>
+          <button @click="closePhaseForm" class="btn btn-primary">Done</button>
         </div>
       </div>
     </div>
@@ -2566,4 +2571,133 @@ function handlePhaseReorder() {
 
 /* Constrain only the Domain field on larger screens */
 .edit-form .domain-group { max-width: 240px; margin-bottom: 0.5rem; }
+
+/* Phases content should have consistent vertical padding like tags */
+.phases-content {
+  padding: 1.5rem 0;
+  height: auto;
+  min-height: auto;
+  max-height: none;
+}
+
+/* Mobile: match main page padding */
+@media (max-width: 600px) {
+  .phases-content {
+    padding: 1.25rem 0;
+  }
+}
+
+/* Phases sections */
+.phases-section {
+  margin-bottom: 1.5rem;
+  height: auto;
+  min-height: auto;
+  flex: none;
+}
+
+.phases-section:last-child {
+  margin-bottom: 0;
+}
+
+.phases-section-title {
+  margin: 0 0 0.75rem 0;
+  padding: 0 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+@media (prefers-color-scheme: dark) {
+  .phases-section-title {
+    color: #fff;
+  }
+}
+
+/* Phases list containers */
+.phases-list {
+  border-top: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  background: light-dark(white, #1a1a1a);
+}
+
+/* Individual phase items */
+.phase-item {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  transition: background 0.2s;
+  background: light-dark(white, #1a1a1a);
+}
+
+.phase-item:last-child {
+  border-bottom: none;
+}
+
+.phase-item.editing {
+  background: light-dark(#f8f9fa, #1a1a1a);
+}
+
+.phase-item .phase-row {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0.75rem 0.75rem 0.75rem;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.phase-item .phase-row:hover {
+  background: light-dark(#f8f9fa, #2a2a2a);
+}
+
+.drag-handle-placeholder {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Phase drag handle styling to match secondary color for visibility */
+.phases-list .drag-handle {
+  color: #666;
+  margin-top: 0; /* Override the default margin-top for perfect alignment with text */
+}
+
+.phases-list .drag-handle:hover {
+  color: #999;
+}
+
+@media (prefers-color-scheme: dark) {
+  .phases-list .drag-handle {
+    color: #ccc;
+  }
+  
+  .phases-list .drag-handle:hover {
+    color: #fff;
+  }
+}
+
+/* Phase delete button styling to match tags */
+.phase-item .btn-icon.btn-danger {
+  color: #999;
+  margin-left: auto;
+}
+
+.phase-item .btn-icon.btn-danger:hover {
+  color: #CC0000;
+  background: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  .phase-item .btn-icon.btn-danger {
+    color: #666;
+  }
+}
+
+.phase-edit-form {
+  padding: 1rem 1.5rem;
+  background: light-dark(#f5f5f5, #2a2a2a);
+  border-top: 1px solid light-dark(#e0e0e0, #404040);
+}
 </style>
