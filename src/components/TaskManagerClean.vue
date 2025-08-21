@@ -12,7 +12,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
         </button>
-        <button v-if="auth.isUnlocked" @click="showPhaseForm = true" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+        <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
@@ -57,7 +57,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
       </button>
-      <button v-if="auth.isUnlocked" @click="showPhaseForm = true" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+      <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
         </svg>
@@ -95,107 +95,114 @@
         <div class="modal-screens" :class="{ 'show-tags': showTagsScreen }">
           <!-- Main Task Form Screen -->
           <div class="modal-screen">
-            <h3>{{ modalTitle }}</h3>
-            <form @submit.prevent="handleTaskSubmit" class="task-form">
-              <div class="form-row">
+            <!-- Top Toolbar -->
+            <div class="modal-toolbar modal-toolbar-top">
+              <div class="toolbar-spacer"></div>
+              <h3 class="toolbar-title">{{ modalTitle }}</h3>
+              <div class="toolbar-spacer"></div>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="modal-content">
+              <form @submit.prevent="handleTaskSubmit" class="task-form">
                 <div class="form-group">
                   <label>Name</label>
                   <input ref="taskNameInput" v-model="currentTask.name" type="text" required />
                 </div>
-              </div>
-              <div class="form-group">
-                <label>Description</label>
-                <textarea v-model="currentTask.description" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <div class="tags-section">
-                  <div class="tags-header">
-                    <label>Tags</label>
-                    <button v-if="auth.isUnlocked" type="button" @click="openTagsScreen" class="btn btn-secondary btn-mini">Edit</button>
-                  </div>
-                  <div v-if="currentTask.features && currentTask.features.length > 0" class="current-tags">
-                    <span class="tag-pill" v-for="featureId in currentTask.features" :key="featureId">
-                      {{ store.getFeatureById(featureId)?.name || featureId }}
-                    </span>
-                  </div>
-                  <div v-else class="no-tags">
-                    No tags
+                <div class="form-group">
+                  <label>Description</label>
+                  <textarea v-model="currentTask.description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <div class="tags-section">
+                    <div class="tags-header">
+                      <label>Tags</label>
+                      <button v-if="auth.isUnlocked" type="button" @click="openTagsScreen" class="btn btn-secondary btn-mini">Edit</button>
+                    </div>
+                    <div v-if="currentTask.features && currentTask.features.length > 0" class="current-tags">
+                      <span class="tag-pill" v-for="featureId in currentTask.features" :key="featureId">
+                        {{ store.getFeatureById(featureId)?.name || featureId }}
+                      </span>
+                    </div>
+                    <div v-else class="no-tags">
+                      No tags
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="form-group domain-group">
-                <label>Domain</label>
-                <select v-model="currentTask.domain">
-                  <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
-                    {{ domain.name }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-actions">
-                <button type="button" @click="closeTaskModal" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">{{ isEditingMode ? 'Save' : 'Add Task' }}</button>
-              </div>
-            </form>
+                <div class="form-group domain-group">
+                  <label>Domain</label>
+                  <select v-model="currentTask.domain">
+                    <option v-for="domain in store.domains" :key="domain.id" :value="domain.id">
+                      {{ domain.name }}
+                    </option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Bottom Toolbar -->
+            <div class="modal-toolbar modal-toolbar-bottom">
+              <button type="button" @click="closeTaskModal" class="btn btn-secondary">Cancel</button>
+              <button type="submit" @click="handleTaskSubmit" class="btn btn-primary">{{ isEditingMode ? 'Save' : 'Add Task' }}</button>
+            </div>
           </div>
 
           <!-- Tags Screen -->
           <div class="modal-screen tags-screen">
-            <div class="modal-nav">
-              <button type="button" @click="closeTagsScreen" class="btn btn-secondary btn-icon-only back-button" title="Back">
+            <!-- Top Toolbar -->
+            <div class="modal-toolbar modal-toolbar-top">
+              <button type="button" @click="closeTagsScreen" class="btn btn-secondary btn-icon-only toolbar-back-button" title="Back">
                 <span class="back-arrow">←</span>
               </button>
-              <h3>Tags</h3>
-              <div class="nav-spacer"></div>
+              <h3 class="toolbar-title">Tags</h3>
+              <div class="toolbar-spacer"></div>
             </div>
             
-            <div class="tags-content">
+            <!-- Scrollable Content -->
+            <div class="modal-content tags-content">
               <!-- Selected Tags Section -->
-              <div v-if="selectedTags.length > 0" class="tag-section">
-                <h4 class="tag-section-title">Selected</h4>
-                <div class="tag-list">
-                  <div v-for="tag in selectedTags" :key="tag.id" class="tag-item" :class="{ 'tag-unused': getTagUsageCount(tag.id) === 0 }">
-                    <label class="checkbox-container">
-                      <input
-                        type="checkbox"
-                        :checked="true"
-                        @change="toggleTag(tag.id, $event.target.checked)"
-                      />
-                      <span class="checkmark"></span>
-                    </label>
-                    <div class="tag-info">
-                      <span class="tag-name">{{ tag.name }}</span>
-                    </div>
-                    <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
+              <div v-if="selectedTags.length > 0" class="content-section">
+                <h4 class="section-title">Selected</h4>
+                <div v-for="tag in selectedTags" :key="tag.id" class="list-item" :class="{ 'item-unused': getTagUsageCount(tag.id) === 0 }">
+                  <label class="checkbox-container">
+                    <input
+                      type="checkbox"
+                      :checked="true"
+                      @change="toggleTag(tag.id, $event.target.checked)"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
+                  <div class="item-content">
+                    <span class="item-name">{{ tag.name }}</span>
                   </div>
+                  <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
 
               <!-- Available Tags Section -->
-              <div class="tag-section">
-                <h4 class="tag-section-title">Tags</h4>
-                <div class="tag-list">
-                  <div v-for="tag in availableTags" :key="tag.id" class="tag-item" :class="{ 'tag-unused': getTagUsageCount(tag.id) === 0 }">
-                    <label class="checkbox-container">
-                      <input
-                        type="checkbox"
-                        :checked="false"
-                        @change="toggleTag(tag.id, $event.target.checked)"
-                      />
-                      <span class="checkmark"></span>
-                    </label>
-                    <div class="tag-info">
-                      <span class="tag-name">{{ tag.name }}</span>
-                    </div>
-                    <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
+              <div class="content-section">
+                <h4 class="section-title">Tags</h4>
+                <div v-for="tag in availableTags" :key="tag.id" class="list-item" :class="{ 'item-unused': getTagUsageCount(tag.id) === 0 }">
+                  <label class="checkbox-container">
+                    <input
+                      type="checkbox"
+                      :checked="false"
+                      @change="toggleTag(tag.id, $event.target.checked)"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
+                  <div class="item-content">
+                    <span class="item-name">{{ tag.name }}</span>
                   </div>
+                  <button v-if="auth.isUnlocked" @click.stop="handleDeleteTag(tag)" class="btn-icon" :class="getTagUsageCount(tag.id) === 0 ? 'btn-secondary' : 'btn-danger'" title="Delete Tag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -221,7 +228,7 @@
     </div>
 
     <!-- Phase Management Modal -->
-    <div v-if="showPhaseForm" class="modal-overlay" @click="showPhaseForm = false">
+    <div v-if="showPhaseForm" class="modal-overlay" @click="closePhaseForm">
       <div class="modal phase-modal" @click.stop>
         <div class="modal-header">
           <h3>Manage Phases</h3>
@@ -298,13 +305,13 @@
         </div>
 
         <div class="form-actions">
-          <button @click="showPhaseForm = false" class="btn btn-secondary">Close</button>
+          <button @click="closePhaseForm" class="btn btn-secondary">Close</button>
         </div>
       </div>
     </div>
 
     <!-- Dependencies Management Modal -->
-    <div v-if="showDependencyForm && editingDependencies" class="modal-overlay" @click="showDependencyForm = false">
+    <div v-if="showDependencyForm && editingDependencies" class="modal-overlay" @click="closeDependencyForm">
       <div class="modal" @click.stop>
         <div class="modal-header">
           <div>
@@ -356,7 +363,7 @@
         </div>
 
         <div class="form-actions">
-          <button @click="showDependencyForm = false" class="btn btn-secondary">Done</button>
+          <button @click="closeDependencyForm" class="btn btn-secondary">Done</button>
         </div>
       </div>
     </div>
@@ -750,6 +757,7 @@ function openUnlockModal() {
   unlockPassword.value = ''
   unlockError.value = ''
   showUnlockModal.value = true
+  preventBodyScroll(true)
   nextTick(() => {
     if (unlockInputRef.value) {
       unlockInputRef.value.focus()
@@ -760,6 +768,22 @@ function openUnlockModal() {
 
 function closeUnlockModal() {
   showUnlockModal.value = false
+  preventBodyScroll(false)
+}
+
+function openPhaseForm() {
+  showPhaseForm.value = true
+  preventBodyScroll(true)
+}
+
+function closePhaseForm() {
+  showPhaseForm.value = false
+  preventBodyScroll(false)
+}
+
+function closeDependencyForm() {
+  showDependencyForm.value = false
+  preventBodyScroll(false)
 }
 
 function openAddForm() {
@@ -772,6 +796,8 @@ function openAddForm() {
     features: []
   }
   showTaskModal.value = true
+  // Prevent body scrolling on all devices
+  preventBodyScroll(true)
   nextTick(() => {
     if (taskNameInput.value) {
       taskNameInput.value.focus()
@@ -784,6 +810,8 @@ function openEditForm(taskId) {
   if (!auth.isUnlocked) return
   editingTaskId.value = taskId
   showTaskModal.value = true
+  // Prevent body scrolling on all devices
+  preventBodyScroll(true)
   nextTick(() => {
     if (taskNameInput.value) {
       taskNameInput.value.focus()
@@ -796,6 +824,8 @@ function closeTaskModal() {
   showTaskModal.value = false
   editingTaskId.value = null
   showTagsScreen.value = false
+  // Restore body scrolling
+  preventBodyScroll(false)
 }
 
 function openTagsScreen() {
@@ -872,6 +902,53 @@ function attemptUnlock() {
   })
 }
 
+// Body scroll prevention for mobile compatibility
+let scrollPosition = 0
+
+function preventBodyScroll(prevent) {
+  if (prevent) {
+    // Save current scroll position
+    scrollPosition = window.pageYOffset || document.documentElement.scrollTop
+    
+    // Apply styles to prevent scrolling
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollPosition}px`
+    document.body.style.width = '100%'
+    
+    // Add touchmove event listener for mobile
+    document.addEventListener('touchmove', preventTouchMove, { passive: false })
+  } else {
+    // Restore scrolling
+    document.documentElement.style.overflow = ''
+    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.width = ''
+    
+    // Restore scroll position
+    window.scrollTo(0, scrollPosition)
+    
+    // Remove touchmove event listener
+    document.removeEventListener('touchmove', preventTouchMove)
+  }
+}
+
+function preventTouchMove(e) {
+  // Allow scrolling inside modal content areas
+  let target = e.target
+  while (target && target !== document.body) {
+    if (target.classList?.contains('modal-content') || target.classList?.contains('phase-list-compact') || target.classList?.contains('dependency-list')) {
+      return // Allow scrolling in these areas
+    }
+    target = target.parentNode
+  }
+  
+  // Prevent all other touch scrolling
+  e.preventDefault()
+}
+
 function handleGlobalKey(e) {
   const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '')
   const isTypingTarget = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)
@@ -892,10 +969,15 @@ function handleGlobalKey(e) {
       } else {
         closeTaskModal()
       }
-    } else if (showPhaseForm.value) showPhaseForm.value = false
-    else if (showAddPhaseForm.value) showAddPhaseForm.value = false
-    else if (showDependencyForm.value) showDependencyForm.value = false
-    else if (showUnlockModal.value) showUnlockModal.value = false
+    } else if (showPhaseForm.value) {
+      closePhaseForm()
+    } else if (showAddPhaseForm.value) {
+      showAddPhaseForm.value = false
+    } else if (showDependencyForm.value) {
+      closeDependencyForm()
+    } else if (showUnlockModal.value) {
+      closeUnlockModal()
+    }
   }
 }
 
@@ -905,11 +987,14 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKey)
+  // Clean up body scroll prevention if component unmounts while modal is open
+  preventBodyScroll(false)
 })
 
 function editTaskDependencies(task) {
   editingDependencies.value = { ...task }
   showDependencyForm.value = true
+  preventBodyScroll(true)
 }
 
 function toggleDependency(taskId, isChecked) {
@@ -1151,21 +1236,26 @@ function handlePhaseReorder() {
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  overflow: hidden;
+  touch-action: none;
 }
 
 .modal {
   background: white;
-  padding: 1.5rem;
   border-radius: 16px;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
-  overflow-y: auto;
+  height: 80vh;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .phase-modal {
   max-width: 600px;
+  height: 80vh;
 }
 
 .modal h3 {
@@ -1278,7 +1368,9 @@ function handlePhaseReorder() {
 .phase-list-compact {
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
   margin-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .phase-item-compact {
@@ -1377,9 +1469,11 @@ function handlePhaseReorder() {
 .dependency-list {
   max-height: 250px;
   overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid #E5E5E5;
   border-radius: 8px;
   background: #FAFAFA;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dependency-item {
@@ -1682,7 +1776,7 @@ function handlePhaseReorder() {
 
 /* Task form styling to match edit form */
 .task-form {
-  margin-top: 1.5rem;
+  margin: 0;
 }
 
 .task-form .form-row { 
@@ -1709,8 +1803,11 @@ function handlePhaseReorder() {
 .modal-screens {
   display: flex;
   width: 200%;
+  height: 100%;
   transform: translateX(0);
   transition: transform 0.3s ease;
+  flex: 1;
+  min-height: 0;
 }
 
 .modal-screens.show-tags {
@@ -1784,23 +1881,37 @@ function handlePhaseReorder() {
   font-style: italic;
 }
 
-/* Tags Screen */
-.tags-screen {
+/* Modal Screens Structure */
+.modal-screen {
+  flex: 0 0 50%;
+  width: 50%;
+  position: relative;
+  opacity: 1;
+  transition: opacity 0.3s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
-.modal-nav {
+/* iOS-Style Modal Toolbars */
+.modal-toolbar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 1rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #E5E5E5;
-  margin-bottom: 1.5rem;
+  background: #F8F9FA;
 }
 
-.modal-nav h3 {
+.modal-toolbar-bottom {
+  border-bottom: none;
+  border-top: 1px solid #E5E5E5;
+  margin-top: auto;
+}
+
+.toolbar-title {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1811,99 +1922,104 @@ function handlePhaseReorder() {
   line-height: 1.3;
 }
 
-.nav-spacer {
+.toolbar-spacer {
   width: 48px;
   height: 48px;
 }
 
-.modal-nav .back-button {
+.toolbar-back-button {
   color: #333 !important;
 }
 
-.modal-nav .back-button:hover {
+.toolbar-back-button:hover {
   color: #333 !important;
   background: #E5E5E5;
 }
 
-.modal-nav .back-button .back-arrow {
+.toolbar-back-button .back-arrow {
   font-size: 20px;
   font-weight: bold;
   line-height: 1;
   color: #333;
 }
 
-.modal-nav .back-button:hover .back-arrow {
+.toolbar-back-button:hover .back-arrow {
   color: #333;
 }
 
-.tags-content {
+/* Modal Content Area */
+.modal-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
-.tag-section {
-  margin-bottom: 1.5rem;
+/* Tags content has no side padding */
+.tags-content {
+  padding: 0;
 }
 
-.tag-section:last-child {
+.content-section {
+  margin-bottom: 2rem;
+}
+
+.content-section:last-child {
   margin-bottom: 0;
 }
 
-.tag-section-title {
-  margin: 0 0 0.75rem 0;
+.section-title {
+  margin: 0 0 1rem 0;
+  padding: 0 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
   color: #333;
   line-height: 1.3;
 }
 
-.tag-list {
-  max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid #E5E5E5;
-  border-radius: 8px;
-  background: #FAFAFA;
-}
-
-.tag-item {
+/* List Items */
+.list-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
+  padding: 0.75rem 1.5rem;
   gap: 0.75rem;
   border-bottom: 1px solid #E5E5E5;
   transition: background 0.2s;
+  background: white;
 }
 
-.tag-item .btn-icon {
-  margin-left: auto;
-}
-
-.tag-item:last-child {
+.list-item:last-child {
   border-bottom: none;
 }
 
-.tag-item:hover {
+.list-item:hover {
   background: #F0F0F0;
 }
 
-.tag-info {
+.list-item .btn-icon {
+  margin-left: auto;
+}
+
+.item-content {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.tag-name {
+.item-name {
   font-weight: 500;
   color: #1a1a1a;
   line-height: 1.3;
 }
 
-.tag-unused {
+.item-unused {
   opacity: 0.6;
 }
 
-.tag-unused .tag-name {
+.item-unused .item-name {
   color: #999;
 }
 
