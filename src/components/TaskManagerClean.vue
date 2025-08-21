@@ -93,7 +93,7 @@
     </div>
 
     <!-- Task Modal (Add/Edit) -->
-    <div v-if="showTaskModal" class="modal-overlay" @click="closeTaskModal">
+    <div v-if="showTaskModal" class="modal-overlay" @click="cancelTaskModal">
       <div class="modal task-modal" @click.stop>
         <div class="modal-screens" :class="{ 'show-tags': showTagsScreen }">
           <!-- Main Task Form Screen -->
@@ -141,6 +141,13 @@
                   </div>
                 </div>
               </form>
+            </div>
+            
+            <!-- Bottom Toolbar -->
+            <div class="modal-toolbar modal-toolbar-bottom">
+              <button @click="cancelTaskModal" class="btn btn-secondary">Cancel</button>
+              <div class="toolbar-spacer"></div>
+              <button @click="handleTaskSubmit" class="btn btn-primary">{{ isEditingMode ? 'Save' : 'Add' }}</button>
             </div>
             
           </div>
@@ -203,6 +210,13 @@
                   </button>
                 </div>
               </div>
+            </div>
+            
+            <!-- Bottom Toolbar -->
+            <div class="modal-toolbar modal-toolbar-bottom">
+              <div class="toolbar-spacer"></div>
+              <div class="toolbar-spacer"></div>
+              <button @click="closeTagsScreen" class="btn btn-primary">Done</button>
             </div>
           </div>
         </div>
@@ -600,6 +614,12 @@ const newTask = ref({
   description: '',
   features: []
 })
+const editingTask = ref({
+  name: '',
+  domain: 'runtime',
+  description: '',
+  features: []
+})
 const newPhase = ref({
   name: '',
   goal: ''
@@ -615,7 +635,7 @@ const isEditingMode = computed(() => editingTaskId.value !== null)
 const modalTitle = computed(() => isEditingMode.value ? 'Edit task' : 'New task')
 const currentTask = computed(() => {
   if (isEditingMode.value) {
-    return store.tasks.find(t => t.id === editingTaskId.value) || {}
+    return editingTask.value
   }
   return newTask.value
 })
@@ -729,16 +749,16 @@ function getPhaseProgressPercent(phaseId) {
 function handleTaskSubmit() {
   if (currentTask.value.name.trim()) {
     if (isEditingMode.value) {
-      // Update existing task
+      // Update existing task with local changes
       store.updateTask(editingTaskId.value, {
-        name: currentTask.value.name,
-        description: currentTask.value.description,
-        domain: currentTask.value.domain,
-        features: currentTask.value.features
+        name: editingTask.value.name,
+        description: editingTask.value.description,
+        domain: editingTask.value.domain,
+        features: editingTask.value.features
       })
     } else {
       // Add new task
-      store.addTask({ ...currentTask.value })
+      store.addTask({ ...newTask.value })
       // Reset form for next time
       newTask.value = {
         name: '',
@@ -835,6 +855,18 @@ function openAddForm() {
 function openEditForm(taskId) {
   if (!auth.isUnlocked) return
   editingTaskId.value = taskId
+  
+  // Create a local copy of the task for editing
+  const originalTask = store.tasks.find(t => t.id === taskId)
+  if (originalTask) {
+    editingTask.value = {
+      name: originalTask.name,
+      domain: originalTask.domain,
+      description: originalTask.description || '',
+      features: [...(originalTask.features || [])]
+    }
+  }
+  
   showTaskModal.value = true
   // Prevent body scrolling on all devices
   preventBodyScroll(true)
@@ -857,6 +889,22 @@ function closeTaskModal() {
   preventBodyScroll(false)
 }
 
+function cancelTaskModal() {
+  // Don't save any changes - just close the modal
+  if (isEditingMode.value) {
+    // Reset any unsaved changes by doing nothing
+  } else {
+    // Reset new task form
+    newTask.value = {
+      name: '',
+      domain: 'runtime',
+      description: '',
+      features: []
+    }
+  }
+  closeTaskModal()
+}
+
 function openTagsScreen() {
   showTagsScreen.value = true
 }
@@ -875,10 +923,10 @@ function toggleTag(tagId, isChecked) {
     newFeatures = currentFeatures.filter(id => id !== tagId)
   }
   
-  // Update the current task's features
+  // Update the current task's features in local state
   if (isEditingMode.value) {
-    // Update the actual task in the store
-    store.updateTask(editingTaskId.value, { features: newFeatures })
+    // Update the local editing task
+    editingTask.value.features = newFeatures
   } else {
     // Update the new task form
     newTask.value.features = newFeatures
@@ -1001,7 +1049,7 @@ function handleGlobalKey(e) {
       if (showTagsScreen.value) {
         closeTagsScreen()
       } else {
-        closeTaskModal()
+        cancelTaskModal()
       }
     } else if (showPhaseForm.value) {
       closePhaseForm()
@@ -1307,7 +1355,14 @@ function handlePhaseReorder() {
   backdrop-filter: blur(4px);
   overflow: hidden;
   touch-action: none;
-  padding: env(safe-area-inset-top, 1rem) max(env(safe-area-inset-right), 2rem) env(safe-area-inset-bottom, 1rem) max(env(safe-area-inset-left), 2rem);
+  padding: env(safe-area-inset-top, 1rem) max(env(safe-area-inset-right), 3rem) env(safe-area-inset-bottom, 1rem) max(env(safe-area-inset-left), 3rem);
+}
+
+/* Mobile: match main page padding */
+@media (max-width: 600px) {
+  .modal-overlay {
+    padding: env(safe-area-inset-top, 0.5rem) max(env(safe-area-inset-right), 0.5rem) env(safe-area-inset-bottom, 0.5rem) max(env(safe-area-inset-left), 0.5rem);
+  }
 }
 
 .modal {
@@ -1323,34 +1378,26 @@ function handlePhaseReorder() {
   flex-direction: column;
 }
 
-/* Mobile: fill screen and remove padding/centering */
+/* Mobile: increase height but keep centered */
 @media (max-width: 768px) {
-  .modal-overlay {
-    padding: 0;
-  }
-  
   .modal {
-    max-height: 100vh;
-    height: 100vh;
-    width: 100vw;
-    max-width: none;
-    border-radius: 0;
-    border: none;
+    max-height: 80vh;
+    height: 80vh;
   }
 }
 
 /* Mobile landscape adjustments */
 @media (max-width: 768px) and (orientation: landscape) {
   .modal {
-    max-height: 100vh;
-    height: 100vh;
-    width: 100vw;
-    max-width: none;
+    max-height: 85vh;
+    height: 85vh;
+    max-width: 600px;
+    width: 85%;
   }
   
   .phase-modal {
-    max-height: 100vh;
-    height: 100vh;
+    max-height: 85vh;
+    height: 85vh;
   }
 }
 
@@ -2053,11 +2100,80 @@ function handlePhaseReorder() {
   /* background: light-dark(#f5f5f5, #1a1a1a); */
 }
 
+/* Mobile: safe area container for modals */
+@media (max-width: 768px) {
+  .modal-safe-area-container {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modal-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 .modal-toolbar-bottom {
   border-bottom: none;
-  /* border-top: 1px solid light-dark(#e0e0e0, #404040); */
+  border-top: 1px solid light-dark(#e0e0e0, #2a2a2a);
   margin-top: auto;
+  background: light-dark(#f5f5f5, #1a1a1a);
 }
+
+/* Bottom toolbar button styling - needs to override .modal-toolbar .btn */
+.modal-toolbar.modal-toolbar-bottom .btn {
+  padding: 0.5rem 1rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  flex-shrink: 0;
+  background: transparent !important;
+  min-width: auto !important;
+  height: auto !important;
+}
+
+.modal-toolbar.modal-toolbar-bottom .btn.btn-secondary {
+  background: light-dark(#e8e8e8, #2a2a2a) !important;
+  color: #666 !important;
+  font-weight: 400 !important;
+}
+
+.modal-toolbar.modal-toolbar-bottom .btn.btn-secondary:hover {
+  background: light-dark(#d8d8d8, #404040) !important;
+  transform: none !important;
+}
+
+.modal-toolbar.modal-toolbar-bottom .btn.btn-primary {
+  background: #007AFF !important;
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.modal-toolbar.modal-toolbar-bottom .btn.btn-primary:hover {
+  background: #0056CC !important;
+  transform: none !important;
+}
+
+/* Dark mode overrides for bottom toolbar buttons */
+@media (prefers-color-scheme: dark) {
+  .modal-toolbar.modal-toolbar-bottom .btn.btn-secondary {
+    background: #2a2a2a !important;
+    color: #ccc !important;
+  }
+
+  .modal-toolbar.modal-toolbar-bottom .btn.btn-secondary:hover {
+    background: #404040 !important;
+  }
+}
+
 
 .toolbar-title {
   flex: 1;
@@ -2133,9 +2249,16 @@ function handlePhaseReorder() {
   min-height: calc(100% + 1px);
 }
 
-/* Tags content has no side padding */
+/* Tags content should have consistent vertical padding */
 .tags-content {
-  padding: 0;
+  padding: 1.5rem 0;
+}
+
+/* Mobile: match main page padding */
+@media (max-width: 600px) {
+  .tags-content {
+    padding: 1.25rem 0;
+  }
 }
 
 .content-section {
