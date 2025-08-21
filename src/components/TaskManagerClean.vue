@@ -1,50 +1,53 @@
 <template>
   <div class="task-manager">
-    <header class="header">
-      <h1>Pixl Planner</h1>
-      <p class="subtitle">Game Engine Development Tasks</p>
-    </header>
-
-    <div class="controls">
-      <div class="control-group">
-        <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-        </button>
-        <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-          </svg>
-        </button>
-        <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-        </button>
-
-
-      </div>
-      <div class="stats">
-        <div class="stat-item">
-          <span class="stat-number">{{ completedTasks }}</span>
-          <span class="stat-label">done</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ store.tasks.length }}</span>
-          <span class="stat-label">tasks</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ store.phases.length }}</span>
-          <span class="stat-label">phases</span>
+    <div class="main-header">
+      <!-- Left side: Title and Controls -->
+      <div class="header-left">
+        <header class="header">
+          <h1>Pixl Planner</h1>
+          <p class="subtitle">Game Engine Development Tasks</p>
+        </header>
+        
+        <div class="control-group">
+          <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+          </button>
+          <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
         </div>
       </div>
-    </div>
 
-    <!-- Progress Bar -->
-    <div class="progress-container">
-      <div class="progress-bar">
-        <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+      <!-- Right side: Stats and Progress -->
+      <div class="stats-progress-container">
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ completedTasks }}</span>
+            <span class="stat-label">done</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ store.tasks.length }}</span>
+            <span class="stat-label">tasks</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ store.phases.length }}</span>
+            <span class="stat-label">phases</span>
+          </div>
+        </div>
+        
+        <!-- Progress Bar contained within stats -->
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+        </div>
       </div>
     </div>
 
@@ -208,15 +211,24 @@
     <!-- Unlock Editing Modal -->
     <div v-if="showUnlockModal" class="modal-overlay" @click="closeUnlockModal">
       <div class="modal" @click.stop>
-        <h3>Unlock Editing</h3>
-        <div class="form-group">
-          <label>Password</label>
-          <input ref="unlockInputRef" v-model="unlockPassword" type="password" @keyup.enter="attemptUnlock" />
+        <!-- Top Toolbar -->
+        <div class="modal-toolbar modal-toolbar-top">
+          <div class="toolbar-spacer"></div>
+          <h3 class="toolbar-title">Unlock Editing</h3>
+          <div class="toolbar-spacer"></div>
         </div>
-        <p v-if="unlockError" class="error-text">{{ unlockError }}</p>
-        <div class="form-actions">
-          <button @click="closeUnlockModal" class="btn btn-secondary">Cancel</button>
-          <button @click="attemptUnlock" class="btn btn-primary">Unlock</button>
+        
+        <!-- Scrollable Content -->
+        <div class="modal-content">
+          <div class="form-group">
+            <label>Password</label>
+            <input ref="unlockInputRef" v-model="unlockPassword" type="password" @keyup.enter="attemptUnlock" />
+          </div>
+          <p v-if="unlockError" class="error-text">{{ unlockError }}</p>
+          <div class="form-actions">
+            <button @click="closeUnlockModal" class="btn btn-secondary">Cancel</button>
+            <button @click="attemptUnlock" class="btn btn-primary">Unlock</button>
+          </div>
         </div>
       </div>
     </div>
@@ -224,82 +236,87 @@
     <!-- Phase Management Modal -->
     <div v-if="showPhaseForm" class="modal-overlay" @click="closePhaseForm">
       <div class="modal phase-modal" @click.stop>
-        <div class="modal-header">
-          <h3>Manage Phases</h3>
+        <!-- Top Toolbar -->
+        <div class="modal-toolbar modal-toolbar-top">
+          <div class="toolbar-spacer"></div>
+          <h3 class="toolbar-title">Manage Phases</h3>
           <button @click="showAddPhaseForm = true" class="btn btn-primary btn-small" title="Add Phase">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
           </button>
         </div>
-
-        <!-- Add Phase Form -->
-        <div v-if="showAddPhaseForm" class="add-phase-form">
-          <div class="form-row">
-            <input v-model="newPhase.name" type="text" placeholder="Phase name" class="phase-name-input" />
-            <input v-model="newPhase.goal" type="text" placeholder="Goal or milestone" class="phase-goal-input" />
-            <button @click="handleAddPhase" class="btn btn-primary btn-small">Add</button>
-            <button @click="showAddPhaseForm = false" class="btn btn-secondary btn-small">Cancel</button>
+        
+        <!-- Scrollable Content -->
+        <div class="modal-content">
+          <!-- Add Phase Form -->
+          <div v-if="showAddPhaseForm" class="add-phase-form">
+            <div class="form-row">
+              <input v-model="newPhase.name" type="text" placeholder="Phase name" class="phase-name-input" />
+              <input v-model="newPhase.goal" type="text" placeholder="Goal or milestone" class="phase-goal-input" />
+              <button @click="handleAddPhase" class="btn btn-primary btn-small">Add</button>
+              <button @click="showAddPhaseForm = false" class="btn btn-secondary btn-small">Cancel</button>
+            </div>
           </div>
-        </div>
 
-        <!-- Compact Phase List -->
-        <div class="phase-list-compact">
-          <draggable
-            v-model="store.phases"
-            item-key="id"
-            handle=".drag-handle"
-            @end="handlePhaseReorder"
-            animation="150"
-            :disabled="!auth.isUnlocked"
-            class="phase-draggable-list"
-          >
-            <template #item="{ element: phase }">
-              <div class="phase-item-compact" :class="{ editing: editingPhase === phase.id }">
-                <!-- Compact Phase Row -->
-                <div class="phase-row" @click="togglePhaseEdit(phase.id)">
-                  <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-                  <div class="phase-info-compact">
-                    <span class="phase-name-compact">{{ phase.name }}</span>
-                    <span class="phase-goal-compact">{{ phase.goal }}</span>
-                    <span class="task-count-compact">{{ (phase.tasks || []).length }} tasks</span>
+          <!-- Compact Phase List -->
+          <div class="phase-list-compact">
+            <draggable
+              v-model="store.phases"
+              item-key="id"
+              handle=".drag-handle"
+              @end="handlePhaseReorder"
+              animation="150"
+              :disabled="!auth.isUnlocked"
+              class="phase-draggable-list"
+            >
+              <template #item="{ element: phase }">
+                <div class="phase-item-compact" :class="{ editing: editingPhase === phase.id }">
+                  <!-- Compact Phase Row -->
+                  <div class="phase-row" @click="togglePhaseEdit(phase.id)">
+                    <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                    <div class="phase-info-compact">
+                      <span class="phase-name-compact">{{ phase.name }}</span>
+                      <span class="phase-goal-compact">{{ phase.goal }}</span>
+                      <span class="task-count-compact">{{ (phase.tasks || []).length }} tasks</span>
+                    </div>
+                    <div class="phase-actions">
+                      <button v-if="auth.isUnlocked" @click.stop="togglePhaseEdit(phase.id)" class="btn-icon btn-small" title="Edit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button v-if="auth.isUnlocked" @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger btn-small" title="Delete">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                  <div class="phase-actions">
-                    <button v-if="auth.isUnlocked" @click.stop="togglePhaseEdit(phase.id)" class="btn-icon btn-small" title="Edit">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button v-if="auth.isUnlocked" @click.stop="handleRemovePhase(phase.id)" class="btn-icon btn-danger btn-small" title="Delete">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
+
+                  <!-- Inline Edit Form -->
+                  <div v-if="editingPhase === phase.id" class="phase-edit-form">
+                    <div class="form-group">
+                      <label>Phase Name</label>
+                      <input v-model="phase.name" type="text" />
+                    </div>
+                    <div class="form-group">
+                      <label>Goal</label>
+                      <input v-model="phase.goal" type="text" />
+                    </div>
+                    <div class="form-actions">
+                      <button @click="editingPhase = null" class="btn btn-secondary btn-small">Done</button>
+                    </div>
                   </div>
                 </div>
+              </template>
+            </draggable>
+          </div>
 
-                <!-- Inline Edit Form -->
-                <div v-if="editingPhase === phase.id" class="phase-edit-form">
-                  <div class="form-group">
-                    <label>Phase Name</label>
-                    <input v-model="phase.name" type="text" />
-                  </div>
-                  <div class="form-group">
-                    <label>Goal</label>
-                    <input v-model="phase.goal" type="text" />
-                  </div>
-                  <div class="form-actions">
-                    <button @click="editingPhase = null" class="btn btn-secondary btn-small">Done</button>
-                  </div>
-                </div>
-              </div>
-            </template>
-          </draggable>
-        </div>
-
-        <div class="form-actions">
-          <button @click="closePhaseForm" class="btn btn-secondary">Close</button>
+          <div class="form-actions">
+            <button @click="closePhaseForm" class="btn btn-secondary">Close</button>
+          </div>
         </div>
       </div>
     </div>
@@ -307,12 +324,16 @@
     <!-- Dependencies Management Modal -->
     <div v-if="showDependencyForm && editingDependencies" class="modal-overlay" @click="closeDependencyForm">
       <div class="modal" @click.stop>
-        <div class="modal-header">
-          <div>
-            <h3>Dependencies</h3>
-            <p class="modal-subtitle">Select which tasks "<strong>{{ editingDependencies.name }}</strong>" depends on</p>
-          </div>
+        <!-- Top Toolbar -->
+        <div class="modal-toolbar modal-toolbar-top">
+          <div class="toolbar-spacer"></div>
+          <h3 class="toolbar-title">Dependencies</h3>
+          <div class="toolbar-spacer"></div>
         </div>
+        
+        <!-- Scrollable Content -->
+        <div class="modal-content">
+          <p class="modal-subtitle">Select which tasks "<strong>{{ editingDependencies.name }}</strong>" depends on</p>
 
         <div class="dependency-sections">
           <!-- Selected Dependencies Section -->
@@ -354,10 +375,11 @@
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
-        <div class="form-actions">
-          <button @click="closeDependencyForm" class="btn btn-secondary">Done</button>
+          <div class="form-actions">
+            <button @click="closeDependencyForm" class="btn btn-secondary">Done</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1103,13 +1125,27 @@ function handlePhaseReorder() {
   width: 100%;
 }
 
-.header {
-  text-align: center;
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 2rem;
+  gap: 2rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.header {
+  text-align: left;
+  margin-bottom: 0;
 }
 
 .header h1 {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
@@ -1117,15 +1153,15 @@ function handlePhaseReorder() {
 
 .subtitle {
   color: #666;
-  font-size: 1.1rem;
-  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+  margin: 0.1rem 0 0 0;
 }
 
-.controls {
+.stats-progress-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
 }
 
 .control-group {
@@ -1155,29 +1191,14 @@ function handlePhaseReorder() {
   text-transform: uppercase;
 }
 
-.progress-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-/* Desktop-specific progress bar alignment */
-@media (min-width: 601px) {
-  .progress-container {
-    justify-content: flex-end;
-  }
-}
-
 .progress-bar {
-  flex: 1;
   height: 8px;
   background: light-dark(#E8E8E8, #3a3a3a);
   border-radius: 4px;
   overflow: hidden;
-  max-width: 300px;
+  width: 100%;
 }
+
 
 .progress-fill {
   height: 100%;
@@ -1496,7 +1517,7 @@ function handlePhaseReorder() {
 .task-count-compact {
   font-size: 0.8rem;
   color: light-dark(#666, #999);
-  background: light-dark(#f0f0f0, #333);
+  background: light-dark(#f0f0f0, #242424);
   padding: 0.2rem 0.5rem;
   border-radius: 12px;
   white-space: nowrap;
@@ -1620,13 +1641,12 @@ function handlePhaseReorder() {
 }
 
 .phase-goal-badge {
-  background: light-dark(#f0f0f0, #333);
+  background: light-dark(#f0f0f0, #242424);
   color: light-dark(#666, #ccc);
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
-  border: 1px solid light-dark(#d0d0d0, #555);
 }
 
 .phase-progress {
@@ -1770,13 +1790,12 @@ function handlePhaseReorder() {
 }
 
 .feature-tag {
-  background: light-dark(#f5f5f5, #2a2a2a);
+  background: light-dark(#f5f5f5, #242424);
   color: light-dark(#1a1a1a, #e5e5e5);
   padding: 0.2rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 400;
-  border: 2px solid light-dark(#e0e0e0, #404040);
 }
 
 
@@ -1931,13 +1950,12 @@ function handlePhaseReorder() {
 }
 
 .tag-pill {
-  background: light-dark(#f5f5f5, #2a2a2a);
+  background: light-dark(#f5f5f5, #242424);
   color: light-dark(#1a1a1a, #e5e5e5);
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 400;
-  border: 2px solid light-dark(#e0e0e0, #404040);
   display: inline-flex;
   align-items: center;
 }
@@ -2186,7 +2204,7 @@ function handlePhaseReorder() {
 .ring-track {
   fill: none;
   stroke: light-dark(#E8E8E8, #3a3a3a);
-  stroke-width: 6;
+  stroke-width: 3;
   stroke-linecap: round;
 }
 .ring-progress {
@@ -2243,14 +2261,22 @@ function handlePhaseReorder() {
 
 /* Mobile portrait tweaks */
 @media (max-width: 600px) and (orientation: portrait) {
-  .controls {
+  .main-header {
     flex-direction: column;
     align-items: center;
+    margin-bottom: 3rem;
     gap: 1rem;
   }
 
+  .header {
+    text-align: center;
+  }
+
+  .stats-progress-container {
+    align-items: center;
+  }
+
   .stats {
-    width: 100%;
     justify-content: center;
   }
 
@@ -2271,7 +2297,7 @@ function handlePhaseReorder() {
 .mobile-lock-row {
   display: none;
   justify-content: flex-start;
-  margin: 0.5rem 0 1.25rem 0;
+  margin: 3rem 0 1.25rem 0;
   gap: 0.5rem;
 }
 
