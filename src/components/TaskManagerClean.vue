@@ -1129,7 +1129,7 @@ function handlePhaseReorder() {
 .task-manager {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 3rem;
   font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
