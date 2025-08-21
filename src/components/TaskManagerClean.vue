@@ -17,13 +17,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
         </button>
-        <button v-if="auth.isUnlocked" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
+        <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
         </button>
-        <button v-if="!auth.isUnlocked" @click="openUnlockModal" class="btn btn-secondary" title="Unlock editing">Unlock</button>
-        <button v-else @click="auth.lock()" class="btn btn-secondary" title="Lock editing">Lock</button>
+
       </div>
       <div class="stats">
         <div class="stat-item">
@@ -84,7 +83,7 @@
         <h3>Unlock Editing</h3>
         <div class="form-group">
           <label>Password</label>
-          <input v-model="unlockPassword" type="password" @keyup.enter="attemptUnlock" />
+          <input ref="unlockInputRef" v-model="unlockPassword" type="password" @keyup.enter="attemptUnlock" />
         </div>
         <p v-if="unlockError" class="error-text">{{ unlockError }}</p>
         <div class="form-actions">
@@ -415,13 +414,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useProjectStore } from '../stores/project-simple.js'
 import { useAuthStore } from '../stores/auth.js'
 import draggable from 'vuedraggable'
 
 const store = useProjectStore()
 const auth = useAuthStore()
+const isDev = import.meta.env.DEV
 
 // Local state
 const showAddForm = ref(false)
@@ -431,6 +431,7 @@ const showDependencyForm = ref(false)
 const showUnlockModal = ref(false)
 const unlockPassword = ref('')
 const unlockError = ref('')
+const unlockInputRef = ref(null)
 const editingTask = ref(null)
 const editingPhase = ref(null)
 const editingDependencies = ref(null)
@@ -556,6 +557,12 @@ function openUnlockModal() {
   unlockPassword.value = ''
   unlockError.value = ''
   showUnlockModal.value = true
+  nextTick(() => {
+    if (unlockInputRef.value) {
+      unlockInputRef.value.focus()
+      unlockInputRef.value.select?.()
+    }
+  })
 }
 
 function closeUnlockModal() {
@@ -564,13 +571,44 @@ function closeUnlockModal() {
 
 function attemptUnlock() {
   unlockError.value = ''
-  const ok = auth.unlock(unlockPassword.value)
-  if (ok) {
-    showUnlockModal.value = false
-  } else {
-    unlockError.value = 'Incorrect password'
+  Promise.resolve(auth.unlock(unlockPassword.value)).then(ok => {
+    if (ok) {
+      showUnlockModal.value = false
+    } else {
+      unlockError.value = 'Incorrect password'
+    }
+  })
+}
+
+function handleGlobalKey(e) {
+  const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '')
+  const isTypingTarget = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)
+
+  if ((e.key === 'l' || e.key === 'L') && !isTypingTarget) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (auth.isUnlocked) {
+      auth.lock()
+    } else {
+      openUnlockModal()
+    }
+  }
+  if (e.key === 'Escape') {
+    if (showAddForm.value) showAddForm.value = false
+    if (showPhaseForm.value) showPhaseForm.value = false
+    if (showAddPhaseForm.value) showAddPhaseForm.value = false
+    if (showDependencyForm.value) showDependencyForm.value = false
+    if (showUnlockModal.value) showUnlockModal.value = false
   }
 }
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKey)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKey)
+})
 
 function editTaskDependencies(task) {
   editingDependencies.value = { ...task }
