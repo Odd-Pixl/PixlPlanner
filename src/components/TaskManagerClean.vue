@@ -476,9 +476,12 @@
         <div class="task-list">
           <draggable
             v-model="phase.tasks"
+            item-key="element"
             handle=".task-drag-handle"
-            animation="150"
+            :animation="150"
             :disabled="!auth.isUnlocked"
+            :force-fallback="false"
+            :fallback-tolerance="0"
             class="task-draggable-list"
             group="tasks"
           >
@@ -563,9 +566,12 @@
         <div class="task-list">
           <draggable
             v-model="unassignedTaskIds"
+            item-key="element"
             handle=".task-drag-handle"
-            animation="150"
+            :animation="150"
             :disabled="!auth.isUnlocked"
+            :force-fallback="false"
+            :fallback-tolerance="0"
             class="task-draggable-list"
             group="tasks"
           >
@@ -1845,8 +1851,9 @@ function handlePhaseReorder() {
 
 .task-item {
   border-bottom: 1px solid light-dark(#e0e0e0, #333);
-  transition: all 0.2s;
+  transition: all 0.2s, transform 0.15s ease;
   background: transparent;
+  transform: translateZ(0); /* Force hardware acceleration */
 }
 
 .task-item:last-child {
@@ -2570,22 +2577,64 @@ function handlePhaseReorder() {
   width: 100%;
 }
 
+/* Ghost element - faded version left in original position */
 .sortable-ghost {
-  opacity: 0.5;
-  background: #F0F8FF;
-  border: 2px dashed #007AFF;
+  opacity: 0.3;
+  background: transparent;
+  border: none;
+  position: relative;
 }
 
+/* Element being dragged - remove blue border */
 .sortable-chosen {
-  background: #F8F9FA;
-  border: 1px solid #007AFF;
+  background: transparent;
+  border: none;
   transform: none;
 }
 
+/* Dragged element appearance */
 .sortable-drag {
-  opacity: 0.8;
+  opacity: 0.9;
   transform: none;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: light-dark(white, #0f0f0f);
+}
+
+/* Drop indicator - thick rounded line at top of drop target */
+.phase-draggable-list .sortable-ghost::before,
+.task-draggable-list .sortable-ghost::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -12px;
+  right: -12px;
+  height: 4px;
+  background: #007AFF !important;
+  border-radius: 2px;
+  z-index: 10000;
+  pointer-events: none;
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* Ensure the drop indicator stays visible during all drag states */
+.sortable-ghost::before {
+  display: block !important;
+  opacity: 1 !important;
+  background: #007AFF !important;
+}
+
+/* Dark mode drop indicator with same color */
+@media (prefers-color-scheme: dark) {
+  .phase-draggable-list .sortable-ghost::before,
+  .task-draggable-list .sortable-ghost::before {
+    background: #007AFF !important;
+  }
+  
+  .sortable-ghost::before {
+    background: #007AFF !important;
+  }
 }
 
 .task-drag-handle {
