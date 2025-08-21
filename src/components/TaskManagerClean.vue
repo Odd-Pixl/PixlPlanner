@@ -183,7 +183,6 @@
             <div class="modal-content tags-content">
               <!-- Single Tags List -->
               <div class="tags-section">
-                <h4 class="tags-section-title">Tags</h4>
                 <div class="tags-list">
                   <div v-for="tag in store.features" :key="tag.id" class="tag-item" :class="{ 'item-unused': getTagUsageCount(tag.id) === 0 }">
                     <label class="checkbox-container">
@@ -228,45 +227,20 @@
             
             <!-- Scrollable Content -->
             <div class="modal-content dependencies-content">
-              <p class="modal-subtitle">Select which tasks "<strong>{{ currentTask.name }}</strong>" depends on</p>
-
-              <div class="dependency-sections">
-                <!-- Selected Dependencies Section -->
-                <div v-if="selectedDependencies.length > 0" class="dependency-section">
-                  <h4 class="dependency-section-title">Selected</h4>
-                  <div class="dependency-list">
-                    <div v-for="task in selectedDependencies" :key="task.id" class="dependency-item">
-                      <label class="checkbox-container">
-                        <input
-                          type="checkbox"
-                          :checked="true"
-                          @change="toggleDependency(task.id, $event.target.checked)"
-                        />
-                        <span class="checkmark"></span>
-                      </label>
-                      <div class="dependency-info">
-                        <span class="dependency-name">{{ task.name }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Available Tasks Section -->
-                <div class="dependency-section">
-                  <h4 class="dependency-section-title">Tasks</h4>
-                  <div class="dependency-list">
-                    <div v-for="task in unselectedDependencies" :key="task.id" class="dependency-item">
-                      <label class="checkbox-container">
-                        <input
-                          type="checkbox"
-                          :checked="false"
-                          @change="toggleDependency(task.id, $event.target.checked)"
-                        />
-                        <span class="checkmark"></span>
-                      </label>
-                      <div class="dependency-info">
-                        <span class="dependency-name">{{ task.name }}</span>
-                      </div>
+              <!-- Single Dependencies List -->
+              <div class="dependencies-section">
+                <div class="dependencies-list">
+                  <div v-for="task in availableTasksForDependencies" :key="task.id" class="dependency-item">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
+                        :checked="currentTask.dependsOn && currentTask.dependsOn.includes(task.id)"
+                        @change="toggleDependencyInModal(task.id, $event.target.checked)"
+                      />
+                      <span class="checkmark"></span>
+                    </label>
+                    <div class="item-content">
+                      <span class="item-name">{{ task.name }}</span>
                     </div>
                   </div>
                 </div>
@@ -358,7 +332,7 @@
                   <div class="phase-item" :class="{ 'editing': editingPhase === phase.id }">
                     <!-- Phase Row -->
                     <div class="phase-row">
-                      <span v-if="auth.isUnlocked" class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                      <span v-if="auth.isUnlocked" class="drag-handle" title="Drag to reorder">⁞⁞</span>
                       <span v-else class="drag-handle-placeholder"></span>
                       
                       <div class="item-content" @click="auth.isUnlocked && togglePhaseEdit(phase.id)">
@@ -471,7 +445,7 @@
       <div v-for="phase in store.phases" :key="phase.id" class="phase-group">
         <div class="phase-title">
           <div class="phase-left">
-            <span class="task-drag-handle drag-handle placeholder" aria-hidden="true">⋮⋮</span>
+            <span class="task-drag-handle drag-handle placeholder" aria-hidden="true">⁞⁞</span>
             <span class="checkbox-placeholder" aria-hidden="true"></span>
           </div>
           <div class="phase-title-content">
@@ -512,8 +486,8 @@
               <div class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
                 <div class="task-row" @click="openEditForm(taskId)">
                   <!-- Drag Handle -->
-                  <span v-if="auth.isUnlocked" class="task-drag-handle drag-handle" title="Drag to reorder">⋮⋮</span>
-                  <span v-else class="task-drag-handle placeholder" aria-hidden="true">⋮⋮</span>
+                  <span v-if="auth.isUnlocked" class="task-drag-handle drag-handle" title="Drag to reorder">⁞⁞</span>
+                  <span v-else class="task-drag-handle placeholder" aria-hidden="true">⁞⁞</span>
 
                   <!-- Completion Checkbox -->
                   <label class="checkbox-container" :class="{ disabled: !auth.isUnlocked }" @click.stop>
@@ -714,8 +688,15 @@ const progressPercent = computed(() => {
   return (completedTasks.value / store.tasks.length) * 100
 })
 
-// Computed property for available tasks for dependencies
+// Computed property for available tasks for dependencies - for both in-modal and separate modal editing
 const availableTasksForDependencies = computed(() => {
+  // If using the in-modal dependencies editing, use currentTask
+  if (showDependenciesScreen.value) {
+    const currentId = currentTask.value.id || (isEditingMode.value ? editingTaskId.value : null)
+    return store.tasks.filter(task => task.id !== currentId)
+  }
+  
+  // If using the separate dependencies modal, use editingDependencies
   if (!editingDependencies.value) return []
   return store.tasks.filter(task => task.id !== editingDependencies.value.id)
 })
@@ -1162,6 +1143,28 @@ function editTaskDependencies(task) {
   preventBodyScroll(true)
 }
 
+// Updated dependency toggle method for the in-modal dependencies editing
+function toggleDependencyInModal(taskId, isChecked) {
+  const currentDeps = currentTask.value.dependsOn || []
+  let newDeps
+  
+  if (isChecked) {
+    newDeps = [...currentDeps, taskId]
+  } else {
+    newDeps = currentDeps.filter(id => id !== taskId)
+  }
+  
+  // Update the current task's dependencies in local state
+  if (isEditingMode.value) {
+    // Update the local editing task
+    editingTask.value.dependsOn = newDeps
+  } else {
+    // Update the new task form
+    newTask.value.dependsOn = newDeps
+  }
+}
+
+// Keep the old method for the separate dependencies modal (if still used)
 function toggleDependency(taskId, isChecked) {
   if (!editingDependencies.value) return
 
@@ -1453,8 +1456,8 @@ function handlePhaseReorder() {
   border-radius: 12px;
   max-width: 500px;
   width: 90%;
-  max-height: 53vh;
-  height: 53vh;
+  max-height: 63vh;
+  height: 63vh;
   border: 1px solid light-dark(#e0e0e0, #2a2a2a);
   overflow: hidden;
   display: flex;
@@ -1486,7 +1489,7 @@ function handlePhaseReorder() {
 
 .phase-modal {
   max-width: 600px;
-  height: 53vh;
+  height: 63vh;
 }
 
 /* Increase height on mobile for phase modal too */
@@ -1696,6 +1699,7 @@ function handlePhaseReorder() {
   padding: 0.2rem 0.5rem;
   border-radius: 12px;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .phase-actions {
@@ -1743,33 +1747,6 @@ function handlePhaseReorder() {
   }
 }
 
-.dependency-list {
-  max-height: 250px;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  border: 1px solid light-dark(#e0e0e0, #404040);
-  border-radius: 8px;
-  background: light-dark(#f5f5f5, #2a2a2a);
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-
-.dependency-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem;
-  gap: 0.75rem;
-  border-bottom: 1px solid light-dark(#E5E5E5, #404040);
-  transition: background 0.2s;
-}
-
-.dependency-item:last-child {
-  border-bottom: none;
-}
-
-.dependency-item:hover {
-  background: light-dark(#f0f0f0, #2a2a2a);
-}
 
 .dependency-info {
   flex: 1;
@@ -1847,7 +1824,7 @@ function handlePhaseReorder() {
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.8rem;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .phase-progress {
@@ -1981,7 +1958,7 @@ function handlePhaseReorder() {
   padding: 0.2rem 0.6rem;
   border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .domain-editor { background: rgba(0, 102, 204, 0.1); color: #0066CC; }
@@ -2017,7 +1994,7 @@ function handlePhaseReorder() {
   padding: 0.2rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 
@@ -2133,40 +2110,11 @@ function handlePhaseReorder() {
   flex: 0 0 33.333%; /* Changed to support 3 screens */
   width: 33.333%;
   position: relative;
-  opacity: 1;
-  transition: opacity 0.3s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
-}
-
-/* Main screen visibility */
-.modal-screens:not(.show-tags):not(.show-dependencies) .modal-screen:nth-child(1) {
-  opacity: 1;
-}
-.modal-screens:not(.show-tags):not(.show-dependencies) .modal-screen:nth-child(2),
-.modal-screens:not(.show-tags):not(.show-dependencies) .modal-screen:nth-child(3) {
-  opacity: 0;
-}
-
-/* Tags screen visibility */
-.modal-screens.show-tags .modal-screen:nth-child(2) {
-  opacity: 1;
-}
-.modal-screens.show-tags .modal-screen:nth-child(1),
-.modal-screens.show-tags .modal-screen:nth-child(3) {
-  opacity: 0;
-}
-
-/* Dependencies screen visibility */
-.modal-screens.show-dependencies .modal-screen:nth-child(3) {
-  opacity: 1;
-}
-.modal-screens.show-dependencies .modal-screen:nth-child(1),
-.modal-screens.show-dependencies .modal-screen:nth-child(2) {
-  opacity: 0;
 }
 
 /* Tags Section in Main Form */
@@ -2251,7 +2199,7 @@ function handlePhaseReorder() {
   padding: 0.375rem 0.75rem;
   border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 400;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
 }
@@ -2277,7 +2225,7 @@ function handlePhaseReorder() {
   padding: 0.375rem 0.75rem;
   border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 400;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
 }
@@ -2514,6 +2462,13 @@ function handlePhaseReorder() {
   background: light-dark(white, #1a1a1a);
 }
 
+/* Dependencies list containers - styled exactly like tags */
+.dependencies-list {
+  border-top: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  background: light-dark(white, #1a1a1a);
+}
+
 /* Individual tag items */
 .tag-item {
   display: flex;
@@ -2526,6 +2481,21 @@ function handlePhaseReorder() {
 }
 
 .tag-item:last-child {
+  border-bottom: none;
+}
+
+/* Individual dependency items - styled exactly like tags */
+.dependency-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  gap: 0.75rem;
+  border-bottom: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  transition: background 0.2s;
+  background: light-dark(white, #1a1a1a);
+}
+
+.dependency-item:last-child {
   border-bottom: none;
 }
 
@@ -2574,19 +2544,19 @@ function handlePhaseReorder() {
 .drag-handle {
   width: 20px;
   height: 20px;
-  color: #CCC;
+  color: light-dark(#999, #888);
   cursor: grab;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 0.25rem;
   user-select: none;
-  font-weight: bold;
+  font-weight: 900;
   font-size: 14px;
 }
 
 .drag-handle:hover {
-  color: #999;
+  color: light-dark(#666, #bbb);
   cursor: grab;
 }
 
@@ -2621,13 +2591,13 @@ function handlePhaseReorder() {
 .task-drag-handle {
   width: 16px;
   height: 16px;
-  color: #CCC;
+  color: light-dark(#999, #888);
   cursor: grab;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
-  font-weight: bold;
+  font-weight: 900;
   font-size: 12px;
   margin-right: 0.5rem;
 }
@@ -2685,7 +2655,7 @@ function handlePhaseReorder() {
 }
 
 .task-drag-handle:hover {
-  color: #999;
+  color: light-dark(#666, #bbb);
   cursor: grab;
 }
 
@@ -2880,23 +2850,15 @@ function handlePhaseReorder() {
 
 /* Phase drag handle styling to match secondary color for visibility */
 .phases-list .drag-handle {
-  color: #666;
+  color: light-dark(#999, #888);
   margin-top: 0; /* Override the default margin-top for perfect alignment with text */
+  font-weight: 900;
 }
 
 .phases-list .drag-handle:hover {
-  color: #999;
+  color: light-dark(#666, #bbb);
 }
 
-@media (prefers-color-scheme: dark) {
-  .phases-list .drag-handle {
-    color: #ccc;
-  }
-  
-  .phases-list .drag-handle:hover {
-    color: #fff;
-  }
-}
 
 /* Phase delete button styling to match tags */
 .phase-item .btn-icon.btn-danger {
