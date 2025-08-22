@@ -122,7 +122,7 @@
                     <input 
                       v-model="currentTask.url" 
                       type="url" 
-                      placeholder="https://example.com"
+                      placeholder="example.com"
                       class="url-input"
                     />
                     <button 
@@ -537,8 +537,19 @@
                         </span>
                       </div>
                     </div>
-                    <p class="task-description" v-if="taskMap[taskId]?.description">
-                      {{ taskMap[taskId]?.description }}
+                    <p class="task-description" v-if="taskMap[taskId]?.description || (taskMap[taskId]?.url && isValidUrl(taskMap[taskId]?.url))">
+                      <span v-if="taskMap[taskId]?.description">{{ taskMap[taskId]?.description }}</span>
+                      <br v-if="taskMap[taskId]?.description && taskMap[taskId]?.url && isValidUrl(taskMap[taskId]?.url)" />
+                      <a 
+                        v-if="taskMap[taskId]?.url && isValidUrl(taskMap[taskId]?.url)" 
+                        :href="taskMap[taskId]?.url.includes('://') ? taskMap[taskId]?.url : `https://${taskMap[taskId]?.url}`"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="task-url-inline"
+                        @click.stop
+                      >
+                        {{ formatUrlForDisplay(taskMap[taskId]?.url) }}
+                      </a>
                     </p>
                     <div v-if="taskMap[taskId]?.features && taskMap[taskId]?.features.length > 0" class="task-features">
                       <span class="feature-tag" v-for="featureId in taskMap[taskId]?.features" :key="featureId">
@@ -1259,18 +1270,56 @@ function handlePhaseReorder() {
 function isValidUrl(urlString) {
   if (!urlString || !urlString.trim()) return false
   
-  try {
-    const url = new URL(urlString.trim())
-    return url.protocol === 'http:' || url.protocol === 'https:'
-  } catch (e) {
-    return false
+  const trimmed = urlString.trim()
+  
+  // If it already has a protocol, validate normally
+  if (trimmed.includes('://')) {
+    try {
+      const url = new URL(trimmed)
+      return url.protocol === 'http:' || url.protocol === 'https:'
+    } catch (e) {
+      return false
+    }
   }
+  
+  // For domain-only URLs like 'example.com', assume https and validate loosely
+  if (trimmed.includes('.') && !trimmed.includes(' ') && trimmed.length > 3) {
+    try {
+      const url = new URL(`https://${trimmed}`)
+      return true
+    } catch (e) {
+      return false
+    }
+  }
+  
+  return false
 }
 
 function openUrl(urlString) {
   if (!isValidUrl(urlString)) return
   
-  window.open(urlString.trim(), '_blank', 'noopener,noreferrer')
+  let url = urlString.trim()
+  
+  // If no protocol, assume https
+  if (!url.includes('://')) {
+    url = `https://${url}`
+  }
+  
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+function formatUrlForDisplay(urlString) {
+  if (!urlString || !urlString.trim()) return ''
+  
+  let displayUrl = urlString.trim()
+  
+  // Remove protocol
+  displayUrl = displayUrl.replace(/^https?:\/\//, '')
+  
+  // Remove www.
+  displayUrl = displayUrl.replace(/^www\./, '')
+  
+  return displayUrl
 }
 </script>
 
@@ -2022,6 +2071,29 @@ function openUrl(urlString) {
 @media (prefers-color-scheme: dark) {
   .task-description {
     color: #ccc;
+  }
+}
+
+.task-url-inline {
+  color: #007AFF;
+  text-decoration: none;
+  font-weight: 400;
+  transition: color 0.2s;
+  word-break: break-all;
+}
+
+.task-url-inline:hover {
+  color: #0056CC;
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .task-url-inline {
+    color: #77a3ff;
+  }
+  
+  .task-url-inline:hover {
+    color: #aac4ff;
   }
 }
 
@@ -2975,14 +3047,14 @@ function openUrl(urlString) {
 }
 
 .url-input-container {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
 }
 
 .url-input {
-  flex: 1;
-  padding: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 0.75rem;
   border: 1px solid light-dark(#e0e0e0, #2a2a2a);
   border-radius: 8px;
   font-size: 1rem;
@@ -2998,35 +3070,45 @@ function openUrl(urlString) {
 }
 
 .btn-url-nav {
-  background: light-dark(#007AFF, #007AFF);
-  color: white;
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
   border: none;
-  border-radius: 8px;
-  padding: 0.75rem;
+  border-radius: 6px;
+  padding: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  height: 48px;
+  min-width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
 .btn-url-nav:hover:not(:disabled) {
+  background: light-dark(#f0f0f0, #2a2a2a);
+}
+
+.btn-url-nav:not(:disabled) {
+  background: light-dark(#007AFF, #007AFF);
+  color: white;
+}
+
+.btn-url-nav:not(:disabled):hover {
   background: light-dark(#0056CC, #0056CC);
-  transform: translateY(-1px);
 }
 
 .btn-url-nav:disabled {
-  background: light-dark(#E5E5E5, #3a3a3a);
-  color: light-dark(#999, #777);
+  background: light-dark(#f5f5f5, #2a2a2a);
+  color: light-dark(#ccc, #777);
   cursor: not-allowed;
-  transform: none;
 }
 
 .btn-url-nav svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 </style>
