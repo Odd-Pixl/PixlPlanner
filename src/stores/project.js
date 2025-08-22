@@ -43,7 +43,8 @@ export const useProjectStore = defineStore('project', () => {
       domain: newTask.domain || 'runtime',
       features: newTask.features || [],
       dependsOn: newTask.dependsOn || [],
-      description: newTask.description || ''
+      description: newTask.description || '',
+      url: newTask.url || ''
     })
   }
 

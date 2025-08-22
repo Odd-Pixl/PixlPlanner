@@ -116,6 +116,28 @@
                   <label>Description</label>
                   <textarea v-model="currentTask.description" rows="3"></textarea>
                 </div>
+                <div class="form-group url-group">
+                  <label>Reference URL</label>
+                  <div class="url-input-container">
+                    <input 
+                      v-model="currentTask.url" 
+                      type="url" 
+                      placeholder="https://example.com"
+                      class="url-input"
+                    />
+                    <button 
+                      type="button" 
+                      @click="openUrl(currentTask.url)" 
+                      :disabled="!isValidUrl(currentTask.url)"
+                      class="btn-url-nav"
+                      title="Open link"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
                 <div class="form-group domain-group">
                   <label>Domain</label>
                   <select v-model="currentTask.domain">
@@ -650,14 +672,16 @@ const newTask = ref({
   domain: 'runtime',
   description: '',
   features: [],
-  dependsOn: []
+  dependsOn: [],
+  url: ''
 })
 const editingTask = ref({
   name: '',
   domain: 'runtime',
   description: '',
   features: [],
-  dependsOn: []
+  dependsOn: [],
+  url: ''
 })
 const newPhase = ref({
   name: '',
@@ -801,7 +825,8 @@ function handleTaskSubmit() {
         description: editingTask.value.description,
         domain: editingTask.value.domain,
         features: editingTask.value.features,
-        dependsOn: editingTask.value.dependsOn
+        dependsOn: editingTask.value.dependsOn,
+        url: editingTask.value.url
       })
     } else {
       // Add new task
@@ -812,7 +837,8 @@ function handleTaskSubmit() {
         domain: 'runtime',
         description: '',
         features: [],
-        dependsOn: []
+        dependsOn: [],
+        url: ''
       }
     }
     closeTaskModal()
@@ -885,7 +911,8 @@ function openAddForm() {
     domain: 'runtime',
     description: '',
     features: [],
-    dependsOn: []
+    dependsOn: [],
+    url: ''
   }
   showTaskModal.value = true
   // Prevent body scrolling on all devices
@@ -913,7 +940,8 @@ function openEditForm(taskId) {
       domain: originalTask.domain,
       description: originalTask.description || '',
       features: [...(originalTask.features || [])],
-      dependsOn: [...(originalTask.dependsOn || [])]
+      dependsOn: [...(originalTask.dependsOn || [])],
+      url: originalTask.url || ''
     }
   }
   
@@ -951,7 +979,8 @@ function cancelTaskModal() {
       domain: 'runtime',
       description: '',
       features: [],
-      dependsOn: []
+      dependsOn: [],
+      url: ''
     }
   }
   closeTaskModal()
@@ -1224,6 +1253,24 @@ function handlePhaseReorder() {
   // The v-model on draggable automatically updates store.phases
   // This function is called after reordering is complete
   console.log('Phases reordered')
+}
+
+// URL validation and navigation functions
+function isValidUrl(urlString) {
+  if (!urlString || !urlString.trim()) return false
+  
+  try {
+    const url = new URL(urlString.trim())
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch (e) {
+    return false
+  }
+}
+
+function openUrl(urlString) {
+  if (!isValidUrl(urlString)) return
+  
+  window.open(urlString.trim(), '_blank', 'noopener,noreferrer')
 }
 </script>
 
@@ -2920,5 +2967,66 @@ function handlePhaseReorder() {
   padding: 1rem 1.5rem;
   background: light-dark(#f5f5f5, #2a2a2a);
   border-top: 1px solid light-dark(#e0e0e0, #404040);
+}
+
+/* URL Input Styling */
+.url-group {
+  margin-bottom: 1rem;
+}
+
+.url-input-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.url-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  background: light-dark(white, #1a1a1a);
+  color: light-dark(#1a1a1a, #e5e5e5);
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: light-dark(#999, #777);
+}
+
+.btn-url-nav {
+  background: light-dark(#007AFF, #007AFF);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.btn-url-nav:hover:not(:disabled) {
+  background: light-dark(#0056CC, #0056CC);
+  transform: translateY(-1px);
+}
+
+.btn-url-nav:disabled {
+  background: light-dark(#E5E5E5, #3a3a3a);
+  color: light-dark(#999, #777);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-url-nav svg {
+  width: 18px;
+  height: 18px;
 }
 </style>
