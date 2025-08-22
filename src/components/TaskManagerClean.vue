@@ -3091,45 +3091,61 @@ function formatUrlForDisplay(urlString) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
 }
 
-.mobile-buttons-left.pushed-left {
+/* Hide left buttons when search is expanded */
+.mobile-lock-row:has(.mobile-search-expanded) .mobile-buttons-left {
   transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Mobile search button (collapsed state) - positioned on right */
 .mobile-search-button {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
 
-/* Mobile search expanded state */
+/* Mobile search expanded state - full width container */
 .mobile-search-expanded {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  animation: expandSearch 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
+  flex: 1;
+  animation: expandSearchContainer 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Search field grows to fill available space */
 .mobile-search-expanded .search-field {
-  width: 240px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  transform-origin: right center;
+  animation: expandSearchField 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Close button stays fixed on right */
 .mobile-search-close {
   flex-shrink: 0;
 }
 
-@keyframes expandSearch {
+@keyframes expandSearchContainer {
   from {
     opacity: 0;
-    transform: scale(0.8);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+  }
+}
+
+@keyframes expandSearchField {
+  from {
+    transform: scaleX(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
   }
 }
 
@@ -3366,6 +3382,14 @@ function formatUrlForDisplay(urlString) {
   width: 240px;
 }
 
+/* Mobile search field should use full available width */
+@media (max-width: 600px) and (orientation: portrait) {
+  .mobile-search-expanded .search-field {
+    width: auto;
+    max-width: none;
+  }
+}
+
 .search-input {
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2rem;
@@ -3376,6 +3400,21 @@ function formatUrlForDisplay(urlString) {
   font-family: inherit;
   background: light-dark(white, #1a1a1a);
   color: light-dark(#1a1a1a, #e5e5e5);
+}
+
+/* Mobile search input - smaller padding to match button height */
+@media (max-width: 600px) and (orientation: portrait) {
+  .mobile-search-expanded .search-input {
+    padding: 0.5rem 0.5rem 0.5rem 1.75rem;
+    height: 40px;
+    box-sizing: border-box;
+  }
+  
+  .mobile-search-expanded .search-icon {
+    left: 0.4rem;
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .search-input::placeholder {
