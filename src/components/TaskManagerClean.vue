@@ -74,42 +74,80 @@
 
     <!-- Mobile-only lock/unlock under stats + progress for touch devices -->
     <div class="mobile-only mobile-lock-row">
-      <!-- Editing buttons first on mobile -->
-      <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-        </svg>
-      </button>
-      <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-        </svg>
-      </button>
+      <!-- Left buttons container -->
+      <div class="mobile-buttons-left">
+        <!-- Editing buttons first on mobile -->
+        <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+        </button>
+        <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </button>
+        
+        <button
+          class="btn btn-secondary btn-icon-only"
+          :title="auth.isUnlocked ? 'Lock' : 'Unlock'"
+          aria-label="Toggle lock"
+          @click="auth.isUnlocked ? auth.lock() : openUnlockModal()"
+        >
+          <!-- Unlocked state shows an open padlock -->
+          <svg v-if="auth.isUnlocked" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 11V7a4 4 0 10-8 0"/>
+            <rect x="6" y="11" width="12" height="10" rx="2" ry="2" stroke-width="2.5"/>
+          </svg>
+          <!-- Locked state shows a closed padlock -->
+          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4"/>
+            <rect x="6" y="11" width="12" height="10" rx="2" ry="2" stroke-width="2.5"/>
+          </svg>
+        </button>
 
-      <button
-        class="btn btn-secondary btn-icon-only"
-        :title="auth.isUnlocked ? 'Lock' : 'Unlock'"
-        aria-label="Toggle lock"
-        @click="auth.isUnlocked ? auth.lock() : openUnlockModal()"
-      >
-        <!-- Unlocked state shows an open padlock -->
-        <svg v-if="auth.isUnlocked" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 11V7a4 4 0 10-8 0"/>
-          <rect x="6" y="11" width="12" height="10" rx="2" ry="2" stroke-width="2.5"/>
-        </svg>
-        <!-- Locked state shows a closed padlock -->
-        <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4"/>
-          <rect x="6" y="11" width="12" height="10" rx="2" ry="2" stroke-width="2.5"/>
-        </svg>
-      </button>
-
-      <!-- Reset moves to the end on mobile -->
-      <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-      </button>
+        <!-- Reset moves to the end on mobile -->
+        <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Right search area -->
+      <div class="mobile-search-container">
+        <!-- Show search button when not expanded -->
+        <button v-if="!mobileSearchExpanded" @click="openMobileSearch" class="btn btn-secondary btn-icon-only mobile-search-button" title="Search tasks">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="11" cy="11" r="8" stroke-width="2.5" stroke-linecap="round"></circle>
+            <path d="m21 21-4.35-4.35" stroke-width="2.5" stroke-linecap="round"></path>
+          </svg>
+        </button>
+        
+        <!-- Show search field when expanded -->
+        <div v-if="mobileSearchExpanded" class="mobile-search-expanded">
+          <div class="search-field">
+            <input 
+              ref="mobileSearchInput"
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Filter tasks..."
+              class="search-input"
+              @blur="handleMobileSearchBlur"
+            />
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8" stroke-width="2.5" stroke-linecap="round"></circle>
+              <path d="m21 21-4.35-4.35" stroke-width="2.5" stroke-linecap="round"></path>
+            </svg>
+          </div>
+          <button @click="closeMobileSearch" class="btn btn-secondary btn-icon-only mobile-search-close" title="Close search">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="18" y1="6" x2="6" y2="18" stroke-width="2.5" stroke-linecap="round"></line>
+              <line x1="6" y1="6" x2="18" y2="18" stroke-width="2.5" stroke-linecap="round"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Task Modal (Add/Edit) -->
@@ -705,6 +743,8 @@ const editingPhase = ref(null)
 const editingDependencies = ref(null)
 const searchQuery = ref('')
 const searchInput = ref(null)
+const mobileSearchInput = ref(null)
+const mobileSearchExpanded = ref(false)
 const newTask = ref({
   name: '',
   domain: 'runtime',
@@ -1221,6 +1261,29 @@ function clearSearch() {
   searchQuery.value = ''
 }
 
+function openMobileSearch() {
+  mobileSearchExpanded.value = true
+  nextTick(() => {
+    if (mobileSearchInput.value) {
+      mobileSearchInput.value.focus()
+    }
+  })
+}
+
+function closeMobileSearch() {
+  mobileSearchExpanded.value = false
+  searchQuery.value = '' // Clear search when closing
+}
+
+function handleMobileSearchBlur() {
+  // Small delay to allow clicking the close button
+  setTimeout(() => {
+    if (mobileSearchExpanded.value && !searchQuery.value.trim()) {
+      closeMobileSearch()
+    }
+  }, 150)
+}
+
 function handleGlobalKey(e) {
   const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '')
   const isTypingTarget = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)
@@ -1243,8 +1306,14 @@ function handleGlobalKey(e) {
     }
   }
   if (e.key === 'Escape') {
+    // If mobile search is expanded, close it
+    if (mobileSearchExpanded.value) {
+      e.preventDefault()
+      e.stopPropagation()
+      closeMobileSearch()
+    }
     // If search field is focused, clear search and blur
-    if (e.target === searchInput.value && searchInput.value) {
+    else if (e.target === searchInput.value && searchInput.value) {
       e.preventDefault()
       e.stopPropagation()
       clearSearch()
@@ -3013,9 +3082,63 @@ function formatUrlForDisplay(urlString) {
 /* Mobile lock row layout */
 .mobile-lock-row {
   display: none;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: center;
   margin: 3rem 0 1.25rem 0;
   gap: 0.5rem;
+  overflow: hidden;
+}
+
+/* Left buttons container */
+.mobile-buttons-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-buttons-left.pushed-left {
+  transform: translateX(-120%);
+}
+
+/* Right search container */
+.mobile-search-container {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Mobile search button (collapsed state) */
+.mobile-search-button {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile search expanded state */
+.mobile-search-expanded {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: expandSearch 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-search-expanded .search-field {
+  width: 240px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-search-close {
+  flex-shrink: 0;
+}
+
+@keyframes expandSearch {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Use smaller buttons/icons on mobile portrait */
