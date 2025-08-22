@@ -16,36 +16,12 @@ const RAW_FILE_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAM
 const API_FILE_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE_PATH}`
 
 /**
- * Loads app data from the GitHub repository
- * @returns {Promise<Object|null>} The app data or null if failed
+ * Loads app data from GitHub (disabled)
+ * @returns {Promise<Object|null>} Always returns null
  */
 export async function loadFromGitHub() {
-  try {
-    console.log('Loading data from GitHub repository...')
-    
-    const response = await fetch(RAW_FILE_URL, {
-      cache: 'no-cache', // Always get fresh data
-      headers: {
-        'Cache-Control': 'no-cache'
-      }
-    })
-    
-    if (!response.ok) {
-      console.warn(`GitHub data fetch failed: ${response.status} ${response.statusText}`)
-      return null
-    }
-    
-    const data = await response.json()
-    console.log('Successfully loaded data from GitHub')
-    
-    // Add timestamp for tracking
-    data._lastSyncFromGitHub = new Date().toISOString()
-    
-    return data
-  } catch (error) {
-    console.warn('Failed to load data from GitHub:', error)
-    return null
-  }
+  // GitHub loading disabled - using localStorage only
+  return null
 }
 
 /**
