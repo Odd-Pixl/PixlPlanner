@@ -63,21 +63,10 @@
               placeholder="Filter tasks..."
               class="search-input"
             />
-            <svg v-if="!searchQuery" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <button 
-              v-if="searchQuery" 
-              @click="clearSearch" 
-              class="clear-search-btn"
-              title="Clear search"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
@@ -3264,7 +3253,7 @@ function formatUrlForDisplay(urlString) {
 
 .search-input {
   width: 100%;
-  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  padding: 0.75rem 0.75rem 0.75rem 2rem;
   border: 1px solid light-dark(#e0e0e0, #2a2a2a);
   border-radius: 8px;
   font-size: 1rem;
@@ -3285,7 +3274,7 @@ function formatUrlForDisplay(urlString) {
 
 .search-icon {
   position: absolute;
-  left: 0.75rem;
+  left: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -3294,34 +3283,6 @@ function formatUrlForDisplay(urlString) {
   pointer-events: none;
 }
 
-.clear-search-btn {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  padding: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  color: #999;
-}
-
-.clear-search-btn:hover {
-  background: light-dark(#f0f0f0, #2a2a2a);
-  color: light-dark(#666, #ccc);
-}
-
-.clear-search-btn svg {
-  width: 14px;
-  height: 14px;
-}
 
 /* No Results Message */
 .no-results-message {
