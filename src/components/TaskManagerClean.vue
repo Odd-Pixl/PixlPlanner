@@ -2249,7 +2249,7 @@ function formatUrlForDisplay(urlString) {
 .task-description {
   color: #666;
   line-height: 1.5;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 1rem 0;
   font-size: 0.95rem;
 }
 
