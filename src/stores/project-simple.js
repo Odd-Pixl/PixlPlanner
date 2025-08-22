@@ -1,14 +1,43 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import projectData from '../data/project-data.json'
+import { loadFromGitHub, generateDataFileContent } from '../services/github-storage.js'
 
 export const useProjectStore = defineStore('project', () => {
-  // Load from localStorage if available, otherwise use default data
-  function loadPersistedData() {
+  // Load data with priority: GitHub > localStorage > default
+  async function loadPersistedData() {
+    // First try to load from GitHub repository
+    try {
+      const githubData = await loadFromGitHub()
+      if (githubData && githubData.domains && githubData.features && githubData.phases && githubData.tasks) {
+        console.log('Using data from GitHub repository')
+        // Also save to localStorage as cache
+        localStorage.setItem('pixl-planner-data', JSON.stringify({
+          domains: githubData.domains,
+          features: githubData.features,
+          phases: githubData.phases,
+          tasks: githubData.tasks
+        }))
+        return {
+          domains: githubData.domains,
+          features: githubData.features,
+          phases: githubData.phases,
+          tasks: githubData.tasks.map(task => ({
+            ...task,
+            completed: task.completed || false
+          }))
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load data from GitHub:', error)
+    }
+
+    // Fallback to localStorage
     try {
       const saved = localStorage.getItem('pixl-planner-data')
       if (saved) {
         const parsed = JSON.parse(saved)
+        console.log('Using data from localStorage')
         return {
           domains: parsed.domains || projectData.domains,
           features: parsed.features || projectData.features,
@@ -23,7 +52,8 @@ export const useProjectStore = defineStore('project', () => {
       console.warn('Failed to load persisted data:', error)
     }
 
-    // Return default data if no saved data or error
+    // Final fallback to default data
+    console.log('Using default project data')
     return {
       domains: projectData.domains,
       features: projectData.features,
@@ -35,13 +65,36 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
-  const persistedData = loadPersistedData()
+  // Initialize with default data first, then load async
+  const defaultData = {
+    domains: projectData.domains,
+    features: projectData.features,
+    phases: projectData.phases,
+    tasks: projectData.tasks.map(task => ({
+      ...task,
+      completed: task.completed || false
+    }))
+  }
 
-  // State - make sure these are reactive
-  const domains = ref([...persistedData.domains])
-  const features = ref([...persistedData.features])
-  const phases = ref([...persistedData.phases])
-  const tasks = ref([...persistedData.tasks])
+  // State - initialize with default data, load persisted data async
+  const domains = ref([...defaultData.domains])
+  const features = ref([...defaultData.features])
+  const phases = ref([...defaultData.phases])
+  const tasks = ref([...defaultData.tasks])
+  const isLoading = ref(true)
+  const lastSyncSource = ref('default')
+
+  // Load persisted data asynchronously
+  loadPersistedData().then(persistedData => {
+    if (persistedData) {
+      domains.value = [...persistedData.domains]
+      features.value = [...persistedData.features]
+      phases.value = [...persistedData.phases]
+      tasks.value = [...persistedData.tasks]
+      lastSyncSource.value = persistedData._lastSyncFromGitHub ? 'github' : 'localStorage'
+    }
+    isLoading.value = false
+  })
 
   // Debug info
   console.log('Store initialized with:', {
@@ -190,12 +243,29 @@ export const useProjectStore = defineStore('project', () => {
     console.log('Data reset to defaults')
   }
 
+  // GitHub sync helpers
+  function exportForGitHub() {
+    const currentData = {
+      domains: domains.value,
+      features: features.value,
+      phases: phases.value,
+      tasks: tasks.value
+    }
+    const content = generateDataFileContent(currentData)
+    console.log('Generated content for GitHub sync:')
+    console.log('File path: data/app-state.json')
+    console.log('Content:', content)
+    return { filePath: 'data/app-state.json', content }
+  }
+
   return {
     // State
     domains,
     features,
     phases,
     tasks,
+    isLoading,
+    lastSyncSource,
     // Methods
     getDomainById,
     getFeatureById,
@@ -209,6 +279,7 @@ export const useProjectStore = defineStore('project', () => {
     updatePhase,
     reorderPhases,
     resetToDefaults,
-    saveToLocalStorage
+    saveToLocalStorage,
+    exportForGitHub
   }
 })
