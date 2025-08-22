@@ -25,11 +25,67 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
           </button>
+          
+          <!-- Search Field (Desktop only) -->
+          <div class="search-container desktop-only">
+            <div class="search-field">
+              <input 
+                ref="searchInput"
+                v-model="searchQuery" 
+                type="text" 
+                placeholder="Filter tasks..."
+                class="search-input"
+              />
+              <svg v-if="!searchQuery" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              <button 
+                v-if="searchQuery" 
+                @click="clearSearch" 
+                class="clear-search-btn"
+                title="Clear search"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Right side: Stats and Progress -->
+      <!-- Right side: Search, Stats and Progress -->
       <div class="stats-progress-container">
+        <!-- Search Field (Desktop only) -->
+        <div class="search-container desktop-only">
+          <div class="search-field">
+            <input 
+              ref="searchInput"
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Search tasks..."
+              class="search-input"
+            />
+            <svg v-if="!searchQuery" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <button 
+              v-if="searchQuery" 
+              @click="clearSearch" 
+              class="clear-search-btn"
+              title="Clear search"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
         <div class="stats">
           <div class="stat-item">
             <span class="stat-number">{{ completedTasks }}</span>
@@ -461,10 +517,15 @@
       </div>
     </div>
 
+    <!-- No Results Message -->
+    <div v-if="searchQuery && searchQuery.trim() && !hasSearchResults" class="no-results-message">
+      <p>No results found</p>
+    </div>
+
     <!-- Task List Grouped by Phases -->
     <div class="phases-container">
-      <!-- Render each phase -->
-      <div v-for="phase in store.phases" :key="phase.id" class="phase-group">
+      <!-- Render each phase that has filtered tasks -->
+      <div v-for="phase in phasesWithFilteredTasks" :key="phase.id" class="phase-group">
         <div class="phase-title">
           <div class="phase-left">
             <span class="task-drag-handle drag-handle placeholder" aria-hidden="true">⁞⁞</span>
@@ -508,7 +569,7 @@
             group="tasks"
           >
             <template #item="{ element: taskId }">
-              <div class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
+              <div v-if="taskMap[taskId] && matchesSearchQuery(taskMap[taskId])" class="task-item" :class="{ completed: taskMap[taskId]?.completed }">
                 <div class="task-row" @click="openEditForm(taskId)">
                   <!-- Drag Handle -->
                   <span v-if="auth.isUnlocked" class="task-drag-handle drag-handle" title="Drag to reorder">⁞⁞</span>
@@ -678,6 +739,8 @@ const unlockInputRef = ref(null)
 const taskNameInput = ref(null)
 const editingPhase = ref(null)
 const editingDependencies = ref(null)
+const searchQuery = ref('')
+const searchInput = ref(null)
 const newTask = ref({
   name: '',
   domain: 'runtime',
@@ -763,11 +826,53 @@ const taskMap = computed(() => {
   return map
 })
 
+// Search functionality
+function matchesSearchQuery(task) {
+  if (!searchQuery.value || !searchQuery.value.trim()) return true
+  
+  const query = searchQuery.value.toLowerCase()
+  
+  // Search in task name
+  if (task.name?.toLowerCase().includes(query)) return true
+  
+  // Search in task description
+  if (task.description?.toLowerCase().includes(query)) return true
+  
+  // Search in task URL
+  if (task.url?.toLowerCase().includes(query)) return true
+  
+  // Search in domain name
+  const domain = store.getDomainById(task.domain)
+  if (domain?.name?.toLowerCase().includes(query)) return true
+  
+  // Search in tags/features
+  if (task.features && task.features.length > 0) {
+    for (const featureId of task.features) {
+      const feature = store.getFeatureById(featureId)
+      if (feature?.name?.toLowerCase().includes(query)) return true
+    }
+  }
+  
+  return false
+}
+
+const filteredTasks = computed(() => {
+  if (!searchQuery.value || !searchQuery.value.trim()) {
+    return store.tasks
+  }
+  return store.tasks.filter(matchesSearchQuery)
+})
+
+const hasSearchResults = computed(() => {
+  return filteredTasks.value.length > 0 || !searchQuery.value || !searchQuery.value.trim()
+})
+
 // Computed unassigned task IDs with setter to persist order into store.tasks
 const unassignedTaskIds = computed({
   get() {
     const assignedIds = new Set(store.phases.flatMap(p => p.tasks || []))
-    return store.tasks.filter(t => !assignedIds.has(t.id)).map(t => t.id)
+    const unassigned = filteredTasks.value.filter(t => !assignedIds.has(t.id)).map(t => t.id)
+    return unassigned
   },
   set(newIds) {
     // Safely reorder only the unassigned tasks based on newIds.
@@ -782,6 +887,23 @@ const unassignedTaskIds = computed({
 
     store.tasks.splice(0, store.tasks.length, ...assignedTasks, ...reorderedUnassigned)
   }
+})
+
+// Computed property for phases that have at least one task matching the search query
+const phasesWithFilteredTasks = computed(() => {
+  if (!searchQuery.value || !searchQuery.value.trim()) {
+    return store.phases
+  }
+  
+  return store.phases.filter(phase => {
+    if (!phase.tasks || phase.tasks.length === 0) return false
+    
+    // Check if any task in this phase matches the search query
+    return phase.tasks.some(taskId => {
+      const task = taskMap.value[taskId]
+      return task && matchesSearchQuery(task)
+    })
+  })
 })
 
 // Helper functions for getting tasks
@@ -1131,10 +1253,22 @@ function preventTouchMove(e) {
   e.preventDefault()
 }
 
+function clearSearch() {
+  searchQuery.value = ''
+}
+
 function handleGlobalKey(e) {
   const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '')
   const isTypingTarget = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)
 
+  if ((e.key === 'f' || e.key === 'F') && !isTypingTarget) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (searchInput.value) {
+      searchInput.value.focus()
+    }
+  }
+  
   if ((e.key === 'l' || e.key === 'L') && !isTypingTarget) {
     e.preventDefault()
     e.stopPropagation()
@@ -3110,5 +3244,101 @@ function formatUrlForDisplay(urlString) {
 .btn-url-nav svg {
   width: 16px;
   height: 16px;
+}
+
+/* Search Field Styling */
+.search-container {
+  margin-bottom: 0.75rem;
+}
+
+.search-field {
+  position: relative;
+  width: 240px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid light-dark(#e0e0e0, #2a2a2a);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  background: light-dark(white, #1a1a1a);
+  color: light-dark(#1a1a1a, #e5e5e5);
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: light-dark(#999, #777);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #999;
+  pointer-events: none;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  color: #999;
+}
+
+.clear-search-btn:hover {
+  background: light-dark(#f0f0f0, #2a2a2a);
+  color: light-dark(#666, #ccc);
+}
+
+.clear-search-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* No Results Message */
+.no-results-message {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+
+.no-results-message p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Desktop-only visibility */
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .desktop-only {
+    display: none;
+  }
 }
 </style>
