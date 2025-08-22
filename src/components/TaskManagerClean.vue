@@ -2,70 +2,65 @@
   <div class="safe-area-container">
     <div class="task-manager">
     <div class="main-header">
-      <!-- Left side: Title and Controls -->
-      <div class="header-left">
-        <header class="header">
+      <!-- Row 1: Title and Stats -->
+      <div class="header-row">
+        <div class="header-component">
           <h1>Pixl Planner</h1>
           <p class="subtitle">Game Engine Development Tasks</p>
-        </header>
+        </div>
         
-        <div class="control-group">
-          <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-            </svg>
-          </button>
-          <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-          </button>
-          
-          <!-- Search Field (Desktop only) -->
-          <div class="search-container desktop-only">
-            <div class="search-field">
-              <input 
-                ref="searchInput"
-                v-model="searchQuery" 
-                type="text" 
-                placeholder="Filter tasks..."
-                class="search-input"
-              />
-              <svg v-if="!searchQuery" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-              <button 
-                v-if="searchQuery" 
-                @click="clearSearch" 
-                class="clear-search-btn"
-                title="Clear search"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+        <div class="header-component stats-progress-container">
+          <div class="stats">
+            <div class="stat-item">
+              <span class="stat-number">{{ completedTasks }}</span>
+              <span class="stat-label">done</span>
             </div>
+            <div class="stat-item">
+              <span class="stat-number">{{ store.tasks.length }}</span>
+              <span class="stat-label">tasks</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">{{ store.phases.length }}</span>
+              <span class="stat-label">phases</span>
+            </div>
+          </div>
+          
+          <!-- Progress Bar contained within stats -->
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
           </div>
         </div>
       </div>
-
-      <!-- Right side: Search, Stats and Progress -->
-      <div class="stats-progress-container">
-        <!-- Search Field (Desktop only) -->
-        <div class="search-container desktop-only">
+      
+      <!-- Row 2: Control Buttons and Search -->
+      <div class="header-row">
+        <div class="header-component">
+          <div class="control-buttons">
+            <button v-if="auth.isUnlocked" @click="openAddForm" class="btn btn-primary btn-icon-only" title="Add Task">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+              </svg>
+            </button>
+            <button v-if="auth.isUnlocked" @click="openPhaseForm" class="btn btn-secondary btn-icon-only" title="Manage Phases">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </button>
+            <button v-if="auth.isUnlocked && isDev" @click="handleResetData" class="btn btn-warning btn-icon-only" title="Reset all data to defaults">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="header-component desktop-only">
           <div class="search-field">
             <input 
               ref="searchInput"
               v-model="searchQuery" 
               type="text" 
-              placeholder="Search tasks..."
+              placeholder="Filter tasks..."
               class="search-input"
             />
             <svg v-if="!searchQuery" class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -84,26 +79,6 @@
               </svg>
             </button>
           </div>
-        </div>
-        
-        <div class="stats">
-          <div class="stat-item">
-            <span class="stat-number">{{ completedTasks }}</span>
-            <span class="stat-label">done</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">{{ store.tasks.length }}</span>
-            <span class="stat-label">tasks</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">{{ store.phases.length }}</span>
-            <span class="stat-label">phases</span>
-          </div>
-        </div>
-        
-        <!-- Progress Bar contained within stats -->
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
         </div>
       </div>
     </div>
@@ -1279,7 +1254,14 @@ function handleGlobalKey(e) {
     }
   }
   if (e.key === 'Escape') {
-    if (showTaskModal.value) {
+    // If search field is focused, clear search and blur
+    if (e.target === searchInput.value && searchInput.value) {
+      e.preventDefault()
+      e.stopPropagation()
+      clearSearch()
+      searchInput.value.blur()
+    }
+    else if (showTaskModal.value) {
       if (showTagsScreen.value) {
         closeTagsScreen()
       } else {
@@ -1495,24 +1477,33 @@ function formatUrlForDisplay(urlString) {
 
 .main-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
   margin-bottom: 2rem;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
-.header-left {
+/* Desktop: more spacing between header rows */
+@media (min-width: 601px) {
+  .main-header {
+    gap: 2.5rem;
+  }
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.header-component {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  flex-shrink: 0;
 }
 
-.header {
-  text-align: left;
-  margin-bottom: 0;
-}
-
-.header h1 {
+.header-component h1 {
   font-size: 2rem;
   font-weight: 700;
   color: #1a1a1a;
@@ -1526,15 +1517,20 @@ function formatUrlForDisplay(urlString) {
 }
 
 .stats-progress-container {
-  display: flex;
-  flex-direction: column;
   align-items: flex-end;
   gap: 0.75rem;
 }
 
-.control-group {
+.control-buttons {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .stats {
@@ -2985,13 +2981,22 @@ function formatUrlForDisplay(urlString) {
 /* Mobile portrait tweaks */
 @media (max-width: 600px) and (orientation: portrait) {
   .main-header {
-    flex-direction: column;
-    align-items: center;
     margin-bottom: 3rem;
     gap: 1rem;
   }
 
-  .header {
+  .header-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-component {
+    align-items: center;
+    text-align: center;
+  }
+
+  .header-component h1 {
     text-align: center;
   }
 
@@ -3006,8 +3011,8 @@ function formatUrlForDisplay(urlString) {
   /* Only show padlock on mobile portrait */
   .mobile-only { display: inline-flex; }
 
-  /* Hide top-left editing controls on mobile; use mobile row below progress */
-  .control-group { display: none; }
+  /* Hide the second header row (control buttons and search) on mobile */
+  .header-row:nth-child(2) { display: none; }
 
   /* Hide goal badge on mobile to give title more room */
   .phase-goal-badge { display: none; }
@@ -3248,7 +3253,8 @@ function formatUrlForDisplay(urlString) {
 
 /* Search Field Styling */
 .search-container {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .search-field {
