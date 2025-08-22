@@ -3009,7 +3009,7 @@ function formatUrlForDisplay(urlString) {
 /* Restore primary text color in dark mode */
 @media (prefers-color-scheme: dark) {
   .task-manager { color: #fff; }
-  .header h1,
+  .header-component h1,
   .modal h3,
   .toolbar-title,
   .phase-title h2,
@@ -3095,11 +3095,16 @@ function formatUrlForDisplay(urlString) {
   opacity: 1;
 }
 
-/* Hide left buttons when search is expanded */
+/* Animate left buttons sliding out and remove them from layout when search is expanded */
 .mobile-lock-row:has(.mobile-search-expanded) .mobile-buttons-left {
+  position: absolute;
+  left: 0;
   transform: translateX(-120%);
   opacity: 0;
   pointer-events: none;
+  width: 0;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Mobile search button (collapsed state) - positioned on right */
@@ -3122,6 +3127,7 @@ function formatUrlForDisplay(urlString) {
   flex: 1;
   transform-origin: right center;
   animation: expandSearchField 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: auto !important; /* Override the fixed 240px width */
 }
 
 /* Close button stays fixed on right */
@@ -3385,8 +3391,10 @@ function formatUrlForDisplay(urlString) {
 /* Mobile search field should use full available width */
 @media (max-width: 600px) and (orientation: portrait) {
   .mobile-search-expanded .search-field {
-    width: auto;
-    max-width: none;
+    width: auto !important;
+    max-width: none !important;
+    flex: 1 !important;
+    display: flex !important;
   }
 }
 
@@ -3402,12 +3410,15 @@ function formatUrlForDisplay(urlString) {
   color: light-dark(#1a1a1a, #e5e5e5);
 }
 
-/* Mobile search input - smaller padding to match button height */
+/* Mobile search input - smaller padding to match button height and full width */
 @media (max-width: 600px) and (orientation: portrait) {
   .mobile-search-expanded .search-input {
     padding: 0.5rem 0.5rem 0.5rem 1.75rem;
     height: 40px;
     box-sizing: border-box;
+    width: 100% !important;
+    min-width: 0;
+    flex: 1;
   }
   
   .mobile-search-expanded .search-icon {
