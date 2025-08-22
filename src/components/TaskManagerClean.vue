@@ -114,39 +114,36 @@
         </button>
       </div>
       
-      <!-- Right search area -->
-      <div class="mobile-search-container">
-        <!-- Show search button when not expanded -->
-        <button v-if="!mobileSearchExpanded" @click="openMobileSearch" class="btn btn-secondary btn-icon-only mobile-search-button" title="Search tasks">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <!-- Right search button -->
+      <button v-if="!mobileSearchExpanded" @click="openMobileSearch" class="btn btn-secondary btn-icon-only mobile-search-button" title="Search tasks">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="11" cy="11" r="8" stroke-width="2.5" stroke-linecap="round"></circle>
+          <path d="m21 21-4.35-4.35" stroke-width="2.5" stroke-linecap="round"></path>
+        </svg>
+      </button>
+      
+      <!-- Search field when expanded -->
+      <div v-if="mobileSearchExpanded" class="mobile-search-expanded">
+        <div class="search-field">
+          <input 
+            ref="mobileSearchInput"
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Filter tasks..."
+            class="search-input"
+            @blur="handleMobileSearchBlur"
+          />
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle cx="11" cy="11" r="8" stroke-width="2.5" stroke-linecap="round"></circle>
             <path d="m21 21-4.35-4.35" stroke-width="2.5" stroke-linecap="round"></path>
           </svg>
-        </button>
-        
-        <!-- Show search field when expanded -->
-        <div v-if="mobileSearchExpanded" class="mobile-search-expanded">
-          <div class="search-field">
-            <input 
-              ref="mobileSearchInput"
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Filter tasks..."
-              class="search-input"
-              @blur="handleMobileSearchBlur"
-            />
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="11" cy="11" r="8" stroke-width="2.5" stroke-linecap="round"></circle>
-              <path d="m21 21-4.35-4.35" stroke-width="2.5" stroke-linecap="round"></path>
-            </svg>
-          </div>
-          <button @click="closeMobileSearch" class="btn btn-secondary btn-icon-only mobile-search-close" title="Close search">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="18" y1="6" x2="6" y2="18" stroke-width="2.5" stroke-linecap="round"></line>
-              <line x1="6" y1="6" x2="18" y2="18" stroke-width="2.5" stroke-linecap="round"></line>
-            </svg>
-          </button>
         </div>
+        <button @click="closeMobileSearch" class="btn btn-secondary btn-icon-only mobile-search-close" title="Close search">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18" stroke-width="2.5" stroke-linecap="round"></line>
+            <line x1="6" y1="6" x2="18" y2="18" stroke-width="2.5" stroke-linecap="round"></line>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -3101,16 +3098,10 @@ function formatUrlForDisplay(urlString) {
   transform: translateX(-120%);
 }
 
-/* Right search container */
-.mobile-search-container {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* Mobile search button (collapsed state) */
+/* Mobile search button (collapsed state) - positioned on right */
 .mobile-search-button {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
 /* Mobile search expanded state */
@@ -3119,6 +3110,7 @@ function formatUrlForDisplay(urlString) {
   align-items: center;
   gap: 0.5rem;
   animation: expandSearch 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
 .mobile-search-expanded .search-field {
@@ -3143,7 +3135,7 @@ function formatUrlForDisplay(urlString) {
 
 /* Use smaller buttons/icons on mobile portrait */
 @media (max-width: 600px) and (orientation: portrait) {
-  .mobile-lock-row { display: flex; justify-content: flex-start; }
+  .mobile-lock-row { display: flex; justify-content: space-between; }
 
   .btn.btn-icon-only {
     padding: 0.5rem;
